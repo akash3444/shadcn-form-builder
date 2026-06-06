@@ -11,8 +11,13 @@ import {
 import type { LucideIcon } from "lucide-react"
 import type { FieldType } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface PaletteItem {
@@ -65,10 +70,10 @@ export function FieldPalette() {
   const addField = useFormBuilderStore((s) => s.addField)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden bg-sidebar">
       <div className="border-b px-4 py-3">
         <h2 className="text-sm font-semibold">Field Types</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Click to add a field
         </p>
       </div>
@@ -79,18 +84,18 @@ export function FieldPalette() {
             <Tooltip key={item.type}>
               <TooltipTrigger
                 render={
-                  <button
+                  <Button
+                    variant="outline"
                     onClick={() => addField(item.type)}
                     className={cn(
-                      "group flex w-full items-center gap-3 rounded-lg border bg-card px-3 py-2.5 text-left",
-                      "transition-colors hover:border-ring hover:bg-accent",
-                      "focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+                      "group h-auto w-full justify-start gap-3 p-1.5",
+                      "bg-background hover:bg-accent"
                     )}
                   />
                 }
               >
-                <div className="bg-muted group-hover:bg-background flex size-8 shrink-0 items-center justify-center rounded-md transition-colors">
-                  <item.icon className="text-muted-foreground size-4" />
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted transition-colors group-hover:bg-background">
+                  <item.icon className="size-4 text-muted-foreground" />
                 </div>
                 <span className="text-sm font-medium">{item.label}</span>
               </TooltipTrigger>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { EyeIcon } from "lucide-react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -24,6 +25,13 @@ import {
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty"
 
 // ---------------------------------------------------------------------------
 // Dynamic schema builder
@@ -33,11 +41,13 @@ function buildSchema(fields: FormField[]) {
   const shape: Record<string, z.ZodTypeAny> = {}
   for (const field of fields) {
     switch (field.type) {
-      case "input":
-        shape[field.name] = field.required
-          ? z.string().min(1, "This field is required")
-          : z.string()
+      case "input": {
+        let s = z.string()
+        if (field.inputType === "email") s = s.email("Invalid email address")
+        if (field.inputType === "url") s = s.url("Invalid URL")
+        shape[field.name] = field.required ? s.min(1, "This field is required") : s
         break
+      }
       case "textarea":
         shape[field.name] = field.required
           ? z.string().min(1, "This field is required")
@@ -47,7 +57,7 @@ function buildSchema(fields: FormField[]) {
       case "switch":
         shape[field.name] = field.required
           ? z.boolean().refine((v) => v === true, "This field is required")
-          : z.boolean()
+          : z.boolean().default(false)
         break
       case "select":
       case "radio-group":
@@ -144,14 +154,17 @@ export function PreviewForm({
 
   if (fields.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          Your form preview will appear here
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Add fields from the left panel to get started
-        </p>
-      </div>
+      <Empty className="border-none">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <EyeIcon />
+          </EmptyMedia>
+          <EmptyTitle>Your form preview will appear here</EmptyTitle>
+          <EmptyDescription>
+            Add fields from the left panel to get started
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 

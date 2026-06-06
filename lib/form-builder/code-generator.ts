@@ -54,21 +54,26 @@ function indent(str: string, spaces: number): string {
 function generateFieldJSX(field: FormField): string {
   const label = field.label || "Field"
   const description = field.description
-  const placeholder = field.placeholder
 
-  const errorLine = `{form.formState.errors.${field.name} && (\n  <p className="text-sm text-destructive">{form.formState.errors.${field.name}?.message}</p>\n)}`
-
-  const descLine = description
-    ? `<p className="text-sm text-muted-foreground">${description}</p>`
+  const requiredSpan = field.required
+    ? `{" "}<span className="ml-1 text-destructive">*</span>`
     : ""
 
-  const labelLine = `<label\n  htmlFor="${field.name}"\n  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"\n>\n  ${label}${field.required ? ' <span className="text-destructive">*</span>' : ""}\n</label>`
+  const descEl = description
+    ? `\n  <FieldDescription>${description}</FieldDescription>`
+    : ""
+
+  const errorEl = `\n  {form.formState.errors.${field.name} && (
+    <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>
+  )}`
 
   switch (field.type) {
     case "input": {
       const f = field as InputField
-      return `<div className="space-y-2">
-  ${labelLine}
+      return `<Field data-invalid={!!form.formState.errors.${f.name}}>
+  <FieldLabel className="text-sm leading-none font-medium">
+    ${label}${requiredSpan}
+  </FieldLabel>
   <Controller
     name="${f.name}"
     control={form.control}
@@ -76,85 +81,99 @@ function generateFieldJSX(field: FormField): string {
       <Input
         id="${f.name}"
         type="${f.inputType}"
-        placeholder="${placeholder}"
+        placeholder="${f.placeholder}"
         disabled={${f.disabled}}
-        aria-invalid={!!fieldState.error}
+        aria-invalid={fieldState.invalid}
         {...field}
       />
     )}
-  />
-  ${descLine}
-  ${errorLine}
-</div>`
+  />${descEl}${errorEl}
+</Field>`
     }
 
     case "textarea": {
       const f = field as TextareaField
-      return `<div className="space-y-2">
-  ${labelLine}
+      return `<Field data-invalid={!!form.formState.errors.${f.name}}>
+  <FieldLabel className="text-sm leading-none font-medium">
+    ${label}${requiredSpan}
+  </FieldLabel>
   <Controller
     name="${f.name}"
     control={form.control}
     render={({ field, fieldState }) => (
       <Textarea
         id="${f.name}"
-        placeholder="${placeholder}"
+        placeholder="${f.placeholder}"
         rows={${f.rows}}
         disabled={${f.disabled}}
-        aria-invalid={!!fieldState.error}
+        aria-invalid={fieldState.invalid}
+        className="resize-none"
         {...field}
       />
     )}
-  />
-  ${descLine}
-  ${errorLine}
-</div>`
+  />${descEl}${errorEl}
+</Field>`
     }
 
     case "checkbox": {
-      return `<div className="flex flex-row items-start space-x-3 rounded-md border p-4">
-  <Controller
-    name="${field.name}"
-    control={form.control}
-    render={({ field: f }) => (
-      <Checkbox
-        id="${field.name}"
-        checked={f.value}
-        onCheckedChange={f.onChange}
-        disabled={${field.disabled}}
-      />
-    )}
-  />
-  <div className="space-y-1 leading-none">
-    <label htmlFor="${field.name}" className="text-sm font-medium leading-none">
-      ${label}
-    </label>
-    ${description ? `<p className="text-sm text-muted-foreground">${description}</p>` : ""}
+      const descInner = description
+        ? `\n      <FieldDescription>${description}</FieldDescription>`
+        : ""
+      return `<Field data-invalid={!!form.formState.errors.${field.name}}>
+  <div className="flex items-start gap-3 rounded-md border p-4">
+    <Controller
+      name="${field.name}"
+      control={form.control}
+      render={({ field: f }) => (
+        <Checkbox
+          id="${field.name}"
+          checked={Boolean(f.value)}
+          onCheckedChange={f.onChange}
+          disabled={${field.disabled}}
+          aria-invalid={!!form.formState.errors.${field.name}}
+        />
+      )}
+    />
+    <div className="flex flex-col gap-1">
+      <FieldLabel className="text-sm leading-none font-medium">
+        ${label}${requiredSpan}
+      </FieldLabel>${descInner}
+    </div>
   </div>
-</div>`
+  {form.formState.errors.${field.name} && (
+    <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>
+  )}
+</Field>`
     }
 
     case "switch": {
-      return `<div className="flex flex-row items-center justify-between rounded-md border p-4">
-  <div className="space-y-0.5">
-    <label htmlFor="${field.name}" className="text-sm font-medium">
-      ${label}
-    </label>
-    ${description ? `<p className="text-sm text-muted-foreground">${description}</p>` : ""}
+      const descInner = description
+        ? `\n      <FieldDescription>${description}</FieldDescription>`
+        : ""
+      return `<Field data-invalid={!!form.formState.errors.${field.name}}>
+  <div className="flex items-center justify-between rounded-md border p-4">
+    <div className="flex flex-col gap-0.5">
+      <FieldLabel className="text-sm font-medium">
+        ${label}${requiredSpan}
+      </FieldLabel>${descInner}
+    </div>
+    <Controller
+      name="${field.name}"
+      control={form.control}
+      render={({ field: f }) => (
+        <Switch
+          id="${field.name}"
+          checked={Boolean(f.value)}
+          onCheckedChange={f.onChange}
+          disabled={${field.disabled}}
+        />
+      )}
+    />
   </div>
-  <Controller
-    name="${field.name}"
-    control={form.control}
-    render={({ field: f }) => (
-      <Switch
-        id="${field.name}"
-        checked={f.value}
-        onCheckedChange={f.onChange}
-        disabled={${field.disabled}}
-      />
-    )}
-  />
-</div>`
+  {form.formState.errors.${field.name} && (
+    <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>
+  )}
+</Field>`
     }
 
     case "select": {
@@ -162,54 +181,54 @@ function generateFieldJSX(field: FormField): string {
       const optionItems = f.options
         .map(
           (o) =>
-            `      <SelectItem value="${o.value}">${o.label}</SelectItem>`
+            `          <SelectItem value="${o.value}">${o.label}</SelectItem>`
         )
         .join("\n")
-      return `<div className="space-y-2">
-  ${labelLine}
+      return `<Field data-invalid={!!form.formState.errors.${f.name}}>
+  <FieldLabel className="text-sm leading-none font-medium">
+    ${label}${requiredSpan}
+  </FieldLabel>
   <Controller
     name="${f.name}"
     control={form.control}
     render={({ field: f, fieldState }) => (
-      <Select value={f.value} onValueChange={f.onChange}>
-        <SelectTrigger id="${f.name}" aria-invalid={!!fieldState.error} className="w-full">
-          <SelectValue placeholder="${placeholder || "Select an option"}" />
+      <Select value={String(f.value ?? "")} onValueChange={f.onChange}>
+        <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
+          <SelectValue placeholder="${f.placeholder || "Select an option"}" />
         </SelectTrigger>
         <SelectContent>
 ${optionItems}
         </SelectContent>
       </Select>
     )}
-  />
-  ${descLine}
-  ${errorLine}
-</div>`
+  />${descEl}${errorEl}
+</Field>`
     }
 
     case "radio-group": {
       const f = field as RadioGroupField
       const radioItems = f.options
         .map(
-          (o) => `      <div className="flex items-center space-x-2">
-        <RadioGroupItem value="${o.value}" id="${f.name}-${o.value}" />
-        <label htmlFor="${f.name}-${o.value}" className="text-sm font-medium">${o.label}</label>
-      </div>`
+          (o) => `        <div className="flex items-center gap-2">
+          <RadioGroupItem value="${o.value}" id="${f.name}-${o.value}" />
+          <label htmlFor="${f.name}-${o.value}" className="cursor-pointer text-sm font-medium">${o.label}</label>
+        </div>`
         )
         .join("\n")
-      return `<div className="space-y-2">
-  ${labelLine}
+      return `<Field data-invalid={!!form.formState.errors.${f.name}}>
+  <FieldLabel className="text-sm leading-none font-medium">
+    ${label}${requiredSpan}
+  </FieldLabel>
   <Controller
     name="${f.name}"
     control={form.control}
     render={({ field: f }) => (
-      <RadioGroup value={f.value} onValueChange={f.onChange} disabled={${f.disabled}}>
+      <RadioGroup value={String(f.value ?? "")} onValueChange={f.onChange} disabled={${f.disabled}}>
 ${radioItems}
       </RadioGroup>
     )}
-  />
-  ${descLine}
-  ${errorLine}
-</div>`
+  />${descEl}${errorEl}
+</Field>`
     }
   }
 }
@@ -224,6 +243,7 @@ function getRequiredImports(fields: FormField[]): string {
     'import { z } from "zod"',
     "",
     'import { Button } from "@/components/ui/button"',
+    'import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"',
   ]
 
   if (types.has("input")) imports.push('import { Input } from "@/components/ui/input"')
@@ -287,10 +307,10 @@ ${defaultValues}
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 ${fieldJSX}
 
-      <Button type="submit">${submitLabel}</Button>
+      <Button type="submit" className="w-full" size="lg">${submitLabel}</Button>
     </form>
   )
 }
