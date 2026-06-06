@@ -87,6 +87,12 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
       addField: (type) =>
         set((state) => {
           const field = createDefaultField(type)
+          const existingNames = new Set(state.fields.map((f) => f.name))
+          if (existingNames.has(field.name)) {
+            let counter = 2
+            while (existingNames.has(`${field.name}${counter}`)) counter++
+            field.name = `${field.name}${counter}`
+          }
           return {
             fields: [...state.fields, field],
             selectedFieldId: field.id,

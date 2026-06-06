@@ -1,8 +1,18 @@
 "use client"
 
 import {
-  DndContext,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { useFormBuilderStore } from "@/lib/form-builder/store"
+import {
   closestCenter,
+  DndContext,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -15,10 +25,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { LayoutTemplateIcon } from "lucide-react"
-import { useFormBuilderStore } from "@/lib/form-builder/store"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { FieldItem } from "./field-item"
 
 export function FieldEditor() {
@@ -49,7 +55,7 @@ export function FieldEditor() {
   }
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden">
+    <div className="flex min-h-0 flex-col overflow-hidden bg-sidebar">
       {/* Form-level settings */}
       <div className="shrink-0 border-b px-4 py-3">
         <h2 className="mb-3 text-sm font-semibold">Form Settings</h2>
@@ -86,7 +92,7 @@ export function FieldEditor() {
       </div>
 
       {/* Field list */}
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-2">
         <h2 className="text-sm font-semibold">
           Fields{" "}
           <span className="font-normal text-muted-foreground">
@@ -96,15 +102,17 @@ export function FieldEditor() {
       </div>
 
       {fields.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-          <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-            <LayoutTemplateIcon className="size-5 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">No fields yet</p>
-          <p className="text-xs text-muted-foreground">
-            Click a field type on the left to add it
-          </p>
-        </div>
+        <Empty className="border-none">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <LayoutTemplateIcon />
+            </EmptyMedia>
+            <EmptyTitle>No fields yet</EmptyTitle>
+            <EmptyDescription>
+              Click a field type on the left to add it
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <DndContext
           sensors={sensors}
@@ -131,7 +139,7 @@ export function FieldEditor() {
       {fields.length > 0 && (
         <>
           <Separator />
-          <p className="px-4 py-2 text-xs text-muted-foreground">
+          <p className="bg-background px-4 py-2 text-xs text-muted-foreground">
             Drag fields to reorder · Click to edit
           </p>
         </>

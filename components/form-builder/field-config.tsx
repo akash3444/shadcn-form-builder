@@ -29,7 +29,7 @@ function LabeledRow({ label, htmlFor, children }: LabeledRowProps) {
     <div className="grid grid-cols-[120px_1fr] items-center gap-2">
       <label
         htmlFor={htmlFor}
-        className="text-muted-foreground text-xs font-medium"
+        className="text-xs font-medium text-muted-foreground"
       >
         {label}
       </label>
@@ -49,7 +49,7 @@ function SwitchRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-muted-foreground text-xs font-medium">{label}</span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} size="sm" />
     </div>
   )
@@ -86,7 +86,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
 
   return (
     <div className="space-y-3 p-4">
-      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
         Field Settings
       </p>
 
@@ -108,6 +108,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="fieldName"
             className="font-mono text-xs"
+            disabled
           />
         </LabeledRow>
 
@@ -207,7 +208,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
         <>
           <Separator />
           <div className="space-y-2">
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               Options
             </p>
             <div className="space-y-1.5">
@@ -235,12 +236,12 @@ export function FieldConfig({ field }: FieldConfigProps) {
                       })
                     }
                     placeholder="value"
-                    className="font-mono h-7 w-24 shrink-0 text-xs"
+                    className="h-7 w-24 shrink-0 font-mono text-xs"
                   />
                   <button
                     onClick={() => removeOption(field.id, option.id)}
                     disabled={field.options.length <= 1}
-                    className="text-muted-foreground hover:text-destructive disabled:opacity-30 shrink-0 transition-colors"
+                    className="shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-30"
                   >
                     <Trash2Icon className="size-3.5" />
                   </button>
