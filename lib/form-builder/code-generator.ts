@@ -71,7 +71,7 @@ function generateFieldJSX(field: FormField): string {
     case "input": {
       const f = field as InputField
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
-  <FieldLabel className="text-sm leading-none font-medium">
+  <FieldLabel htmlFor="${f.name}" className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
   </FieldLabel>
   <Controller
@@ -94,7 +94,7 @@ function generateFieldJSX(field: FormField): string {
     case "textarea": {
       const f = field as TextareaField
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
-  <FieldLabel className="text-sm leading-none font-medium">
+  <FieldLabel htmlFor="${f.name}" className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
   </FieldLabel>
   <Controller
@@ -120,22 +120,22 @@ function generateFieldJSX(field: FormField): string {
         ? `\n      <FieldDescription>${description}</FieldDescription>`
         : ""
       return `<Field data-invalid={!!form.formState.errors.${field.name}}>
-  <div className="flex items-start gap-3 rounded-md border p-4">
+  <div className="flex items-start gap-3">
     <Controller
       name="${field.name}"
       control={form.control}
-      render={({ field: f }) => (
+      render={({ field }) => (
         <Checkbox
           id="${field.name}"
-          checked={Boolean(f.value)}
-          onCheckedChange={f.onChange}
+          checked={Boolean(field.value)}
+          onCheckedChange={field.onChange}
           disabled={${field.disabled}}
           aria-invalid={!!form.formState.errors.${field.name}}
         />
       )}
     />
     <div className="flex flex-col gap-1">
-      <FieldLabel className="text-sm leading-none font-medium">
+      <FieldLabel htmlFor="${field.name}" className="text-sm leading-none font-medium">
         ${label}${requiredSpan}
       </FieldLabel>${descInner}
     </div>
@@ -151,20 +151,20 @@ function generateFieldJSX(field: FormField): string {
         ? `\n      <FieldDescription>${description}</FieldDescription>`
         : ""
       return `<Field data-invalid={!!form.formState.errors.${field.name}}>
-  <div className="flex items-center justify-between rounded-md border p-4">
+  <div className="flex items-center justify-between">
     <div className="flex flex-col gap-0.5">
-      <FieldLabel className="text-sm font-medium">
+      <FieldLabel htmlFor="${field.name}" className="text-sm font-medium">
         ${label}${requiredSpan}
       </FieldLabel>${descInner}
     </div>
     <Controller
       name="${field.name}"
       control={form.control}
-      render={({ field: f }) => (
+      render={({ field }) => (
         <Switch
           id="${field.name}"
-          checked={Boolean(f.value)}
-          onCheckedChange={f.onChange}
+          checked={Boolean(field.value)}
+          onCheckedChange={field.onChange}
           disabled={${field.disabled}}
         />
       )}
@@ -185,14 +185,14 @@ function generateFieldJSX(field: FormField): string {
         )
         .join("\n")
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
-  <FieldLabel className="text-sm leading-none font-medium">
+  <FieldLabel htmlFor="${f.name}" className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
   </FieldLabel>
   <Controller
     name="${f.name}"
     control={form.control}
-    render={({ field: f, fieldState }) => (
-      <Select value={String(f.value ?? "")} onValueChange={f.onChange} disabled={${f.disabled}}>
+    render={({ field, fieldState }) => (
+      <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}}>
         <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
           <SelectValue placeholder="${f.placeholder || "Select an option"}" />
         </SelectTrigger>
@@ -222,8 +222,8 @@ ${optionItems}
   <Controller
     name="${f.name}"
     control={form.control}
-    render={({ field: f }) => (
-      <RadioGroup value={String(f.value ?? "")} onValueChange={f.onChange} disabled={${f.disabled}}>
+    render={({ field }) => (
+      <RadioGroup value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}}>
 ${radioItems}
       </RadioGroup>
     )}

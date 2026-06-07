@@ -98,17 +98,19 @@ function FieldWrapper({
   required,
   description,
   error,
+  htmlFor,
   children,
 }: {
   label: string
   required: boolean
   description: string
   error?: string
+  htmlFor?: string
   children: React.ReactNode
 }) {
   return (
     <Field data-invalid={!!error}>
-      <FieldLabel className="text-sm leading-none font-medium">
+      <FieldLabel htmlFor={htmlFor} className="text-sm leading-none font-medium">
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </FieldLabel>
@@ -190,12 +192,14 @@ export function PreviewForm({
                   required={field.required}
                   description={field.description}
                   error={error}
+                  htmlFor={field.name}
                 >
                   <Controller
                     name={field.name}
                     control={form.control}
                     render={({ field: f, fieldState }) => (
                       <Input
+                        id={field.name}
                         type={field.inputType}
                         placeholder={field.placeholder}
                         disabled={field.disabled}
@@ -219,12 +223,14 @@ export function PreviewForm({
                   required={field.required}
                   description={field.description}
                   error={error}
+                  htmlFor={field.name}
                 >
                   <Controller
                     name={field.name}
                     control={form.control}
                     render={({ field: f, fieldState }) => (
                       <Textarea
+                        id={field.name}
                         placeholder={field.placeholder}
                         rows={field.rows}
                         disabled={field.disabled}
@@ -244,12 +250,13 @@ export function PreviewForm({
             case "checkbox":
               return (
                 <Field key={field.id} data-invalid={!!error}>
-                  <div className="flex items-start gap-3 rounded-md border p-4">
+                  <div className="flex items-start gap-3">
                     <Controller
                       name={field.name}
                       control={form.control}
                       render={({ field: f }) => (
                         <Checkbox
+                          id={field.name}
                           checked={Boolean(f.value)}
                           onCheckedChange={f.onChange}
                           disabled={field.disabled}
@@ -258,7 +265,7 @@ export function PreviewForm({
                       )}
                     />
                     <div className="flex flex-col gap-1">
-                      <FieldLabel className="text-sm leading-none font-medium">
+                      <FieldLabel htmlFor={field.name} className="text-sm leading-none font-medium">
                         {field.label}
                         {field.required && (
                           <span className="ml-1 text-destructive">*</span>
@@ -276,9 +283,9 @@ export function PreviewForm({
             case "switch":
               return (
                 <Field key={field.id} data-invalid={!!error}>
-                  <div className="flex items-center justify-between rounded-md border p-4">
+                  <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-0.5">
-                      <FieldLabel className="text-sm font-medium">
+                      <FieldLabel htmlFor={field.name} className="text-sm font-medium">
                         {field.label}
                         {field.required && (
                           <span className="ml-1 text-destructive">*</span>
@@ -293,6 +300,7 @@ export function PreviewForm({
                       control={form.control}
                       render={({ field: f }) => (
                         <Switch
+                          id={field.name}
                           checked={Boolean(f.value)}
                           onCheckedChange={f.onChange}
                           disabled={field.disabled}
@@ -312,6 +320,7 @@ export function PreviewForm({
                   required={field.required}
                   description={field.description}
                   error={error}
+                  htmlFor={field.name}
                 >
                   <Controller
                     name={field.name}
@@ -322,6 +331,7 @@ export function PreviewForm({
                         onValueChange={f.onChange}
                       >
                         <SelectTrigger
+                          id={field.name}
                           aria-invalid={fieldState.invalid}
                           className="w-full"
                         >
