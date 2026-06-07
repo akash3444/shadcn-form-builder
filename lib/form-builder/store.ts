@@ -130,7 +130,9 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
               (f.type !== "select" && f.type !== "radio-group")
             )
               return f
-            const n = f.options.length + 1
+            const existingValues = new Set(f.options.map((o) => o.value))
+            let n = f.options.length + 1
+            while (existingValues.has(`option-${n}`)) n++
             return {
               ...f,
               options: [

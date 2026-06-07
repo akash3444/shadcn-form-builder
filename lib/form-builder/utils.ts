@@ -8,13 +8,17 @@ export function labelToKey(label: string): string {
 
   if (words.length === 0) return "field"
 
-  return words
+  const result = words
     .map((word, i) =>
       i === 0
         ? word.toLowerCase()
         : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     )
     .join("")
+
+  // Strip leading digits so the result is always a valid JS identifier.
+  // e.g. "1st Name" → "1stName" → "stName", "123" → "123" → "field"
+  return result.replace(/^\d+/, "") || "field"
 }
 
 /** "contact us" → "ContactUs" */

@@ -192,7 +192,7 @@ function generateFieldJSX(field: FormField): string {
     name="${f.name}"
     control={form.control}
     render={({ field: f, fieldState }) => (
-      <Select value={String(f.value ?? "")} onValueChange={f.onChange}>
+      <Select value={String(f.value ?? "")} onValueChange={f.onChange} disabled={${f.disabled}}>
         <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
           <SelectValue placeholder="${f.placeholder || "Select an option"}" />
         </SelectTrigger>
