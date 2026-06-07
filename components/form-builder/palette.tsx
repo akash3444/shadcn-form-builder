@@ -89,7 +89,7 @@ export function FieldPalette() {
                     onClick={() => addField(item.type)}
                     className={cn(
                       "group h-auto w-full justify-start gap-3 p-1.5",
-                      "bg-background hover:bg-accent"
+                      "bg-background! hover:bg-accent!"
                     )}
                   />
                 }

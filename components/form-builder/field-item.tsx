@@ -66,9 +66,9 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "rounded-lg border bg-card transition-shadow",
-        isDragging && "shadow-lg opacity-50",
-        isSelected && "border-ring ring-ring/20 ring-2"
+        "rounded-lg border bg-background transition-shadow",
+        isDragging && "opacity-50 shadow-lg",
+        isSelected && "border-ring ring-2 ring-ring/20"
       )}
     >
       {/* Row header */}
@@ -85,7 +85,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
       >
         {/* Drag handle */}
         <button
-          className="text-muted-foreground/40 hover:text-muted-foreground shrink-0 cursor-grab touch-none active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
           {...attributes}
           {...listeners}
           onClick={(e) => e.stopPropagation()}
@@ -95,8 +95,8 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
         </button>
 
         {/* Type icon */}
-        <div className="bg-muted flex size-6 shrink-0 items-center justify-center rounded">
-          <Icon className="text-muted-foreground size-3.5" />
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Icon className="size-4 text-muted-foreground" />
         </div>
 
         {/* Label + type badge */}
@@ -104,11 +104,9 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
           <p className="truncate text-sm font-medium">
             {field.label || "Untitled"}
           </p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {FIELD_LABELS[field.type]}
-            {field.required && (
-              <span className="text-destructive ml-1">*</span>
-            )}
+            {field.required && <span className="ml-1 text-destructive">*</span>}
           </p>
         </div>
 
@@ -119,14 +117,14 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
               e.stopPropagation()
               removeField(field.id)
             }}
-            className="text-muted-foreground hover:text-destructive rounded p-1 transition-colors"
+            className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
             aria-label="Remove field"
           >
             <Trash2Icon className="size-3.5" />
           </button>
           <ChevronDownIcon
             className={cn(
-              "text-muted-foreground size-4 transition-transform",
+              "size-4 text-muted-foreground transition-transform",
               isSelected && "rotate-180"
             )}
           />
