@@ -29,7 +29,7 @@ export function CodeBlock({ code }: CodeBlockProps) {
 
   if (!html) {
     return (
-      <pre className="p-4 font-mono text-xs leading-relaxed">
+      <pre className="p-4 font-mono text-xs leading-relaxed [font-variant-ligatures:none]">
         <code>{code}</code>
       </pre>
     )
@@ -37,7 +37,7 @@ export function CodeBlock({ code }: CodeBlockProps) {
 
   return (
     <div
-      className="[&_pre]:bg-transparent! [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[13px] [&_pre]:leading-[1.7]"
+      className="[&_pre]:bg-transparent! [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[13px] [&_pre]:leading-[1.7] [&_pre]:[font-variant-ligatures:none]"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
