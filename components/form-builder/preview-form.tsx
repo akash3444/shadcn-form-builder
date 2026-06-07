@@ -126,7 +126,7 @@ function FieldWrapper({
         className="text-sm leading-none font-medium"
       >
         {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
+        {required && <span className="text-destructive">*</span>}
       </FieldLabel>
       {children}
       {description && <FieldDescription>{description}</FieldDescription>}
@@ -291,7 +291,7 @@ export function PreviewForm({
                       >
                         {field.label}
                         {field.required && (
-                          <span className="ml-1 text-destructive">*</span>
+                          <span className="text-destructive">*</span>
                         )}
                       </FieldLabel>
                       {field.description && (
@@ -314,7 +314,7 @@ export function PreviewForm({
                       >
                         {field.label}
                         {field.required && (
-                          <span className="ml-1 text-destructive">*</span>
+                          <span className="text-destructive">*</span>
                         )}
                       </FieldLabel>
                       {field.description && (
@@ -355,6 +355,7 @@ export function PreviewForm({
                       <Select
                         value={String(f.value ?? "")}
                         onValueChange={f.onChange}
+                        items={field.options}
                       >
                         <SelectTrigger
                           id={field.name}
@@ -424,7 +425,7 @@ export function PreviewForm({
                   <FieldLabel className="text-sm leading-none font-medium">
                     {field.label}
                     {field.required && (
-                      <span className="ml-1 text-destructive">*</span>
+                      <span className="text-destructive">*</span>
                     )}
                   </FieldLabel>
                   <Controller

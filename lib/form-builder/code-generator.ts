@@ -1,4 +1,11 @@
-import type { FormField, InputField, TextareaField, SelectField, RadioGroupField, CheckboxGroupField } from "./types"
+import type {
+  FormField,
+  InputField,
+  TextareaField,
+  SelectField,
+  RadioGroupField,
+  CheckboxGroupField,
+} from "./types"
 import { toPascalCase } from "./utils"
 
 function getZodType(field: FormField): string {
@@ -62,7 +69,7 @@ function generateFieldJSX(field: FormField): string {
   const description = field.description
 
   const requiredSpan = field.required
-    ? `{" "}<span className="ml-1 text-destructive">*</span>`
+    ? `{" "}<span className="text-destructive">*</span>`
     : ""
 
   const descEl = description
@@ -190,6 +197,7 @@ function generateFieldJSX(field: FormField): string {
             `          <SelectItem value="${o.value}">${o.label}</SelectItem>`
         )
         .join("\n")
+      const itemsProp = JSON.stringify(f.options)
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}" className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
@@ -198,7 +206,7 @@ function generateFieldJSX(field: FormField): string {
     name="${f.name}"
     control={form.control}
     render={({ field, fieldState }) => (
-      <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}}>
+      <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}} items={${itemsProp}}>
         <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
           <SelectValue placeholder="${f.placeholder || "Select an option"}" />
         </SelectTrigger>
@@ -294,10 +302,14 @@ function getRequiredImports(fields: FormField[]): string {
     'import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"',
   ]
 
-  if (types.has("input")) imports.push('import { Input } from "@/components/ui/input"')
-  if (types.has("textarea")) imports.push('import { Textarea } from "@/components/ui/textarea"')
-  if (types.has("checkbox") || types.has("checkbox-group")) imports.push('import { Checkbox } from "@/components/ui/checkbox"')
-  if (types.has("switch")) imports.push('import { Switch } from "@/components/ui/switch"')
+  if (types.has("input"))
+    imports.push('import { Input } from "@/components/ui/input"')
+  if (types.has("textarea"))
+    imports.push('import { Textarea } from "@/components/ui/textarea"')
+  if (types.has("checkbox") || types.has("checkbox-group"))
+    imports.push('import { Checkbox } from "@/components/ui/checkbox"')
+  if (types.has("switch"))
+    imports.push('import { Switch } from "@/components/ui/switch"')
   if (types.has("select"))
     imports.push(
       'import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"'
