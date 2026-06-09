@@ -88,6 +88,7 @@ const makeRadioGroup = (overrides: Partial<RadioGroupField> = {}): RadioGroupFie
   placeholder: '',
   description: '',
   descriptionPosition: 'below-control' as const,
+  orientation: 'vertical' as const,
   required: false,
   disabled: false,
   options: [

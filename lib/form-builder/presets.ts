@@ -61,7 +61,7 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "cu-f7", type: "radio-group",
         label: "How did you hear about us?", name: "heardAboutUs",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const,required: false, disabled: false,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: false, disabled: false,
         options: [
           { id: "cu-f7-o1", label: "Search Engine", value: "search-engine" },
           { id: "cu-f7-o2", label: "Social Media", value: "social-media" },
@@ -127,7 +127,7 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "uf-f4", type: "radio-group",
         label: "How likely are you to recommend us?", name: "recommendLikelihood",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const,required: true, disabled: false,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: true, disabled: false,
         options: [
           { id: "uf-f4-o1", label: "Definitely", value: "definitely" },
           { id: "uf-f4-o2", label: "Very Likely", value: "very-likely" },
@@ -281,7 +281,7 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "ps-f9", type: "radio-group",
         label: "Profile Visibility", name: "profileVisibility",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const,required: false, disabled: false,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: false, disabled: false,
         options: [
           { id: "ps-f9-o1", label: "Public", value: "public" },
           { id: "ps-f9-o2", label: "Friends Only", value: "friends-only" },
@@ -329,7 +329,7 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "nl-f5", type: "radio-group",
         label: "Frequency Preference", name: "frequency",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const,required: true, disabled: false,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: true, disabled: false,
         options: [
           { id: "nl-f5-o1", label: "Daily Digest", value: "daily" },
           { id: "nl-f5-o2", label: "Weekly Roundup", value: "weekly" },

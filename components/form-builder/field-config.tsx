@@ -5,7 +5,7 @@ import { PlusIcon, Trash2Icon } from "lucide-react"
 import type {
   FormField,
   InputType,
-  CheckboxGroupOrientation,
+  GroupOrientation,
   DescriptionPosition,
 } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
@@ -27,7 +27,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 const ORIENTATION_OPTIONS = [
   { value: "vertical", label: "Vertical" },
   { value: "horizontal", label: "Horizontal" },
-  { value: "responsive", label: "Responsive" },
 ]
 
 interface LabeledRowProps {
@@ -241,8 +240,8 @@ export function FieldConfig({ field }: FieldConfigProps) {
         </>
       )}
 
-      {/* CheckboxGroup-specific: orientation selector */}
-      {field.type === "checkbox-group" && (
+      {/* RadioGroup / CheckboxGroup: orientation selector */}
+      {(field.type === "radio-group" || field.type === "checkbox-group") && (
         <>
           <Separator />
           <LabeledRow label="Orientation">
@@ -250,7 +249,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
               value={field.orientation}
               onValueChange={(v) =>
                 updateField(field.id, {
-                  orientation: v as CheckboxGroupOrientation,
+                  orientation: v as GroupOrientation,
                 })
               }
               items={ORIENTATION_OPTIONS}
