@@ -18,6 +18,12 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 
+const ORIENTATION_OPTIONS = [
+  { value: "vertical", label: "Vertical" },
+  { value: "horizontal", label: "Horizontal" },
+  { value: "responsive", label: "Responsive" },
+]
+
 interface LabeledRowProps {
   label: string
   htmlFor?: string
@@ -213,14 +219,17 @@ export function FieldConfig({ field }: FieldConfigProps) {
               onValueChange={(v) =>
                 updateField(field.id, { orientation: v as CheckboxGroupOrientation })
               }
+              items={ORIENTATION_OPTIONS}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="vertical">Vertical</SelectItem>
-                <SelectItem value="horizontal">Horizontal</SelectItem>
-                <SelectItem value="responsive">Responsive</SelectItem>
+                {ORIENTATION_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </LabeledRow>
