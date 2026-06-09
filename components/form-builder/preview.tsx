@@ -16,7 +16,7 @@ export function FormPreview() {
       defaultValue="preview"
       className="flex h-full flex-col overflow-hidden"
     >
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between border-b bg-sidebar px-4 py-2">
         <TabsList>
           <TabsTrigger value="preview" className="text-xs">
             Preview

@@ -123,7 +123,7 @@ export function FieldEditor() {
             items={fields.map((f) => f.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 scroll-mask-y-from-90%">
               {fields.map((field) => (
                 <FieldItem
                   key={field.id}

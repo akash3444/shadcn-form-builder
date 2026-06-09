@@ -27,7 +27,7 @@ function getZodType(field: FormField): string {
     case "switch":
       return field.required
         ? 'z.boolean().refine((val) => val === true, "This field is required")'
-        : "z.boolean().default(false)"
+        : "z.boolean()"
     case "select":
     case "radio-group": {
       let base = "z.string()"
@@ -37,7 +37,7 @@ function getZodType(field: FormField): string {
     case "checkbox-group":
       return field.required
         ? 'z.array(z.string()).min(1, "Select at least one option")'
-        : "z.array(z.string()).default([])"
+        : "z.array(z.string())"
   }
 }
 
@@ -62,6 +62,24 @@ function indent(str: string, spaces: number): string {
     .split("\n")
     .map((line) => (line.trim() === "" ? "" : pad + line))
     .join("\n")
+}
+
+function toScreamingSnakeCase(str: string): string {
+  return str.replace(/([A-Z])/g, "_$1").toUpperCase()
+}
+
+function getOptionsConstName(fieldName: string): string {
+  return `${toScreamingSnakeCase(fieldName)}_OPTIONS`
+}
+
+function generateOptionsConst(
+  field: SelectField | RadioGroupField | CheckboxGroupField
+): string {
+  const constName = getOptionsConstName(field.name)
+  const rows = field.options
+    .map((o) => `  { label: "${o.label}", value: "${o.value}" },`)
+    .join("\n")
+  return `const ${constName} = [\n${rows}\n]`
 }
 
 function generateFieldJSX(field: FormField): string {
@@ -191,13 +209,7 @@ function generateFieldJSX(field: FormField): string {
 
     case "select": {
       const f = field as SelectField
-      const optionItems = f.options
-        .map(
-          (o) =>
-            `          <SelectItem value="${o.value}">${o.label}</SelectItem>`
-        )
-        .join("\n")
-      const itemsProp = JSON.stringify(f.options)
+      const constName = getOptionsConstName(f.name)
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}" className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
@@ -206,12 +218,14 @@ function generateFieldJSX(field: FormField): string {
     name="${f.name}"
     control={form.control}
     render={({ field, fieldState }) => (
-      <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}} items={${itemsProp}}>
+      <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}} items={${constName}}>
         <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
           <SelectValue placeholder="${f.placeholder || "Select an option"}" />
         </SelectTrigger>
         <SelectContent>
-${optionItems}
+          {${constName}.map((o) => (
+            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     )}
@@ -221,14 +235,7 @@ ${optionItems}
 
     case "radio-group": {
       const f = field as RadioGroupField
-      const radioItems = f.options
-        .map(
-          (o) => `        <div className="flex items-center gap-2">
-          <RadioGroupItem value="${o.value}" id="${f.name}-${o.value}" />
-          <label htmlFor="${f.name}-${o.value}" className="cursor-pointer text-sm font-medium">${o.label}</label>
-        </div>`
-        )
-        .join("\n")
+      const constName = getOptionsConstName(f.name)
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
@@ -238,7 +245,12 @@ ${optionItems}
     control={form.control}
     render={({ field }) => (
       <RadioGroup value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}}>
-${radioItems}
+        {${constName}.map((o) => (
+          <div key={o.value} className="flex items-center gap-2">
+            <RadioGroupItem value={o.value} id={\`${f.name}-\${o.value}\`} />
+            <label htmlFor={\`${f.name}-\${o.value}\`} className="cursor-pointer text-sm font-medium">{o.label}</label>
+          </div>
+        ))}
       </RadioGroup>
     )}
   />${descEl}${errorEl}
@@ -247,9 +259,7 @@ ${radioItems}
 
     case "checkbox-group": {
       const f = field as CheckboxGroupField
-      const optionsArray = f.options
-        .map((o) => `          { label: "${o.label}", value: "${o.value}" },`)
-        .join("\n")
+      const constName = getOptionsConstName(f.name)
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel className="text-sm leading-none font-medium">
     ${label}${requiredSpan}
@@ -259,9 +269,7 @@ ${radioItems}
     control={form.control}
     render={({ field }) => (
       <Field orientation="${f.orientation}">
-        {[
-${optionsArray}
-        ].map((option) => (
+        {${constName}.map((option) => (
           <div key={option.value} className="flex items-center gap-2">
             <Checkbox
               id={\`${f.name}-\${option.value}\`}
@@ -291,6 +299,9 @@ ${optionsArray}
 
 function getRequiredImports(fields: FormField[]): string {
   const types = new Set(fields.map((f) => f.type))
+  const hasDescription = fields.some((f) => f.description)
+  const fieldComponents = ["Field", ...(hasDescription ? ["FieldDescription"] : []), "FieldError", "FieldLabel"].join(", ")
+
   const imports: string[] = [
     '"use client"',
     "",
@@ -299,7 +310,7 @@ function getRequiredImports(fields: FormField[]): string {
     'import { z } from "zod"',
     "",
     'import { Button } from "@/components/ui/button"',
-    'import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"',
+    `import { ${fieldComponents} } from "@/components/ui/field"`,
   ]
 
   if (types.has("input"))
@@ -334,6 +345,16 @@ export function generateFormCode(
     return `// Add fields to your form to generate code.`
   }
 
+  const optionFields = fields.filter(
+    (f): f is SelectField | RadioGroupField | CheckboxGroupField =>
+      f.type === "select" || f.type === "radio-group" || f.type === "checkbox-group"
+  )
+
+  const optionsSection =
+    optionFields.length > 0
+      ? optionFields.map(generateOptionsConst).join("\n\n") + "\n\n"
+      : ""
+
   const schemaFields = fields
     .map((f) => `  ${f.name}: ${getZodType(f)},`)
     .join("\n")
@@ -348,7 +369,7 @@ export function generateFormCode(
 
   return `${getRequiredImports(fields)}
 
-const ${camel}Schema = z.object({
+${optionsSection}const ${camel}Schema = z.object({
 ${schemaFields}
 })
 
@@ -367,7 +388,7 @@ ${defaultValues}
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 ${fieldJSX}
 
       <Button type="submit" className="w-full" size="lg">${submitLabel}</Button>

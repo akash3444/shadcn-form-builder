@@ -195,7 +195,7 @@ export function PreviewForm({
       {formName && <h2 className="mb-6 text-xl font-semibold">{formName}</h2>}
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5"
+        className="space-y-6"
         noValidate
       >
         {fields.map((field) => {
