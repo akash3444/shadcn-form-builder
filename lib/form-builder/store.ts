@@ -47,6 +47,7 @@ function createDefaultField(type: FieldType): FormField {
     name: labelToKey(label),
     placeholder: "",
     description: "",
+    descriptionPosition: "below-control" as const,
     required: false,
     disabled: false,
   }

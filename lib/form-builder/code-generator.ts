@@ -84,15 +84,16 @@ function generateOptionsConst(
 
 function generateFieldJSX(field: FormField): string {
   const label = field.label || "Field"
-  const description = field.description
+  const { description, descriptionPosition } = field
 
   const requiredSpan = field.required
     ? `{" "}<span className="text-destructive">*</span>`
     : ""
 
-  const descEl = description
-    ? `\n  <FieldDescription>${description}</FieldDescription>`
-    : ""
+  const descEl = (pos: "above-control" | "below-control") =>
+    description && descriptionPosition === pos
+      ? `\n  <FieldDescription>${description}</FieldDescription>`
+      : ""
 
   const errorEl = `\n  <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>`
 
@@ -102,7 +103,7 @@ function generateFieldJSX(field: FormField): string {
       return `<Field data-invalid={!!form.formState.errors.${f.name}} data-disabled={${f.disabled}}>
   <FieldLabel htmlFor="${f.name}">
     ${label}${requiredSpan}
-  </FieldLabel>
+  </FieldLabel>${descEl("above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -116,7 +117,7 @@ function generateFieldJSX(field: FormField): string {
         {...field}
       />
     )}
-  />${descEl}${errorEl}
+  />${descEl("below-control")}${errorEl}
 </Field>`
     }
 
@@ -125,7 +126,7 @@ function generateFieldJSX(field: FormField): string {
       return `<Field data-invalid={!!form.formState.errors.${f.name}} data-disabled={${f.disabled}}>
   <FieldLabel htmlFor="${f.name}">
     ${label}${requiredSpan}
-  </FieldLabel>
+  </FieldLabel>${descEl("above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -140,7 +141,7 @@ function generateFieldJSX(field: FormField): string {
         {...field}
       />
     )}
-  />${descEl}${errorEl}
+  />${descEl("below-control")}${errorEl}
 </Field>`
     }
 
@@ -203,7 +204,7 @@ function generateFieldJSX(field: FormField): string {
       return `<Field data-invalid={!!form.formState.errors.${f.name}} data-disabled={${f.disabled}}>
   <FieldLabel htmlFor="${f.name}">
     ${label}${requiredSpan}
-  </FieldLabel>
+  </FieldLabel>${descEl("above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -219,7 +220,7 @@ function generateFieldJSX(field: FormField): string {
         </SelectContent>
       </Select>
     )}
-  />${descEl}${errorEl}
+  />${descEl("below-control")}${errorEl}
 </Field>`
     }
 
@@ -229,7 +230,7 @@ function generateFieldJSX(field: FormField): string {
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${requiredSpan}
-  </FieldLegend>${descEl}
+  </FieldLegend>${descEl("above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -243,7 +244,7 @@ function generateFieldJSX(field: FormField): string {
         ))}
       </RadioGroup>
     )}
-  />
+  />${descEl("below-control")}
   <FieldError>{form.formState.errors.${f.name}?.message}</FieldError>
 </FieldSet>`
     }
@@ -257,7 +258,7 @@ function generateFieldJSX(field: FormField): string {
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${requiredSpan}
-  </FieldLegend>
+  </FieldLegend>${descEl("above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -283,7 +284,7 @@ function generateFieldJSX(field: FormField): string {
         ))}
       </div>
     )}
-  />${descEl}
+  />${descEl("below-control")}
   <FieldError>{form.formState.errors.${f.name}?.message}</FieldError>
 </FieldSet>`
     }

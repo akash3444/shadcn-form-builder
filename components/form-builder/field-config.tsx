@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react"
 import { PlusIcon, Trash2Icon } from "lucide-react"
-import type { FormField, InputType, CheckboxGroupOrientation } from "@/lib/form-builder/types"
+import type {
+  FormField,
+  InputType,
+  CheckboxGroupOrientation,
+  DescriptionPosition,
+} from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { labelToKey } from "@/lib/form-builder/utils"
 import { Input } from "@/components/ui/input"
@@ -17,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const ORIENTATION_OPTIONS = [
   { value: "vertical", label: "Vertical" },
@@ -32,7 +38,7 @@ interface LabeledRowProps {
 
 function LabeledRow({ label, htmlFor, children }: LabeledRowProps) {
   return (
-    <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+    <div className="grid grid-cols-[80px_1fr] items-center gap-2">
       <label
         htmlFor={htmlFor}
         className="text-xs font-medium text-muted-foreground"
@@ -118,19 +124,25 @@ export function FieldConfig({ field }: FieldConfigProps) {
           />
         </LabeledRow>
 
-        {field.type !== "checkbox" && field.type !== "switch" && field.type !== "checkbox-group" && (
-          <LabeledRow label="Placeholder" htmlFor={`placeholder-${field.id}`}>
-            <Input
-              id={`placeholder-${field.id}`}
-              value={field.placeholder}
-              onChange={(e) =>
-                updateField(field.id, { placeholder: e.target.value })
-              }
-              placeholder="Placeholder text"
-            />
-          </LabeledRow>
-        )}
+        {field.type !== "checkbox" &&
+          field.type !== "switch" &&
+          field.type !== "checkbox-group" && (
+            <LabeledRow label="Placeholder" htmlFor={`placeholder-${field.id}`}>
+              <Input
+                id={`placeholder-${field.id}`}
+                value={field.placeholder}
+                onChange={(e) =>
+                  updateField(field.id, { placeholder: e.target.value })
+                }
+                placeholder="Placeholder text"
+              />
+            </LabeledRow>
+          )}
+      </div>
 
+      <Separator />
+
+      <div className="space-y-2.5">
         <LabeledRow label="Description" htmlFor={`description-${field.id}`}>
           <Textarea
             id={`description-${field.id}`}
@@ -142,6 +154,26 @@ export function FieldConfig({ field }: FieldConfigProps) {
             rows={2}
             className="resize-none"
           />
+        </LabeledRow>
+
+        <LabeledRow label="Position">
+          <Tabs
+            value={field.descriptionPosition}
+            onValueChange={(v) =>
+              updateField(field.id, {
+                descriptionPosition: v as DescriptionPosition,
+              })
+            }
+          >
+            <TabsList className="h-7 w-full">
+              <TabsTrigger value="above-control" className="text-[13px]">
+                Above control
+              </TabsTrigger>
+              <TabsTrigger value="below-control" className="text-[13px]">
+                Below control
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </LabeledRow>
       </div>
 
@@ -217,7 +249,9 @@ export function FieldConfig({ field }: FieldConfigProps) {
             <Select
               value={field.orientation}
               onValueChange={(v) =>
-                updateField(field.id, { orientation: v as CheckboxGroupOrientation })
+                updateField(field.id, {
+                  orientation: v as CheckboxGroupOrientation,
+                })
               }
               items={ORIENTATION_OPTIONS}
             >
@@ -237,7 +271,9 @@ export function FieldConfig({ field }: FieldConfigProps) {
       )}
 
       {/* Select / RadioGroup / CheckboxGroup: options editor */}
-      {(field.type === "select" || field.type === "radio-group" || field.type === "checkbox-group") && (
+      {(field.type === "select" ||
+        field.type === "radio-group" ||
+        field.type === "checkbox-group") && (
         <>
           <Separator />
           <div className="space-y-2">

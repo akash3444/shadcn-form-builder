@@ -113,6 +113,7 @@ function FieldWrapper({
   label,
   required,
   description,
+  descriptionPosition,
   error,
   htmlFor,
   disabled,
@@ -121,6 +122,7 @@ function FieldWrapper({
   label: string
   required: boolean
   description: string
+  descriptionPosition: "above-control" | "below-control"
   error?: string
   htmlFor?: string
   disabled?: boolean
@@ -132,8 +134,13 @@ function FieldWrapper({
         {label}
         {required && <span className="text-destructive">*</span>}
       </FieldLabel>
+      {description && descriptionPosition === "above-control" && (
+        <FieldDescription>{description}</FieldDescription>
+      )}
       {children}
-      {description && <FieldDescription>{description}</FieldDescription>}
+      {description && descriptionPosition === "below-control" && (
+        <FieldDescription>{description}</FieldDescription>
+      )}
       <FieldError>{error}</FieldError>
     </Field>
   )
@@ -212,6 +219,7 @@ export function PreviewForm({
                     label={field.label}
                     required={field.required}
                     description={field.description}
+                    descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
                     disabled={field.disabled}
@@ -244,6 +252,7 @@ export function PreviewForm({
                     label={field.label}
                     required={field.required}
                     description={field.description}
+                    descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
                     disabled={field.disabled}
@@ -348,6 +357,7 @@ export function PreviewForm({
                     label={field.label}
                     required={field.required}
                     description={field.description}
+                    descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
                     disabled={field.disabled}
@@ -394,7 +404,7 @@ export function PreviewForm({
                         <span className="ms-1 text-destructive">*</span>
                       )}
                     </FieldLegend>
-                    {field.description && (
+                    {field.description && field.descriptionPosition === "above-control" && (
                       <FieldDescription>{field.description}</FieldDescription>
                     )}
                     <Controller
@@ -425,6 +435,9 @@ export function PreviewForm({
                         </RadioGroup>
                       )}
                     />
+                    {field.description && field.descriptionPosition === "below-control" && (
+                      <FieldDescription>{field.description}</FieldDescription>
+                    )}
                     <FieldError>{error}</FieldError>
                   </FieldSet>
                 )
@@ -438,6 +451,9 @@ export function PreviewForm({
                         <span className="ms-1 text-destructive">*</span>
                       )}
                     </FieldLegend>
+                    {field.description && field.descriptionPosition === "above-control" && (
+                      <FieldDescription>{field.description}</FieldDescription>
+                    )}
                     <Controller
                       name={field.name}
                       control={form.control}
@@ -480,7 +496,7 @@ export function PreviewForm({
                         </div>
                       )}
                     />
-                    {field.description && (
+                    {field.description && field.descriptionPosition === "below-control" && (
                       <FieldDescription>{field.description}</FieldDescription>
                     )}
                     <FieldError>{error}</FieldError>

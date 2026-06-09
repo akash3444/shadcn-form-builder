@@ -21,6 +21,7 @@ interface BaseField {
   name: string
   placeholder: string
   description: string
+  descriptionPosition: DescriptionPosition
   required: boolean
   disabled: boolean
 }
@@ -54,6 +55,8 @@ export interface RadioGroupField extends BaseField {
 }
 
 export type CheckboxGroupOrientation = "vertical" | "horizontal" | "responsive"
+
+export type DescriptionPosition = "above-control" | "below-control"
 
 export interface CheckboxGroupField extends BaseField {
   type: "checkbox-group"
