@@ -227,6 +227,9 @@ function generateFieldJSX(field: FormField): string {
     case "radio-group": {
       const f = field as RadioGroupField
       const constName = getOptionsConstName(f.name)
+      const layoutClass = f.orientation === "horizontal"
+        ? "flex flex-row flex-wrap gap-3"
+        : "flex flex-col gap-3"
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${requiredSpan}
@@ -235,7 +238,7 @@ function generateFieldJSX(field: FormField): string {
     name="${f.name}"
     control={form.control}
     render={({ field }) => (
-      <RadioGroup value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}}>
+      <RadioGroup value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}} className="${layoutClass}">
         {${constName}.map((o) => (
           <div key={o.value} className="flex items-center gap-2">
             <RadioGroupItem value={o.value} id={\`${f.name}-\${o.value}\`} />

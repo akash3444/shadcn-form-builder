@@ -69,7 +69,7 @@ function createDefaultField(type: FieldType): FormField {
     case "select":
       return { ...base, type: "select", options: defaultOptions }
     case "radio-group":
-      return { ...base, type: "radio-group", options: defaultOptions }
+      return { ...base, type: "radio-group", options: defaultOptions, orientation: "vertical" }
     case "checkbox-group":
       return { ...base, type: "checkbox-group", options: defaultOptions, orientation: "vertical" }
   }

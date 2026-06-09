@@ -415,6 +415,12 @@ export function PreviewForm({
                           value={String(f.value ?? "")}
                           onValueChange={f.onChange}
                           disabled={field.disabled}
+                          className={cn(
+                            "flex gap-3",
+                            field.orientation === "horizontal"
+                              ? "flex-row flex-wrap"
+                              : "flex-col"
+                          )}
                         >
                           {field.options.map((opt) => (
                             <div

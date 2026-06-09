@@ -49,19 +49,20 @@ export interface SelectField extends BaseField {
   options: FieldOption[]
 }
 
+export type GroupOrientation = "vertical" | "horizontal"
+
+export type DescriptionPosition = "above-control" | "below-control"
+
 export interface RadioGroupField extends BaseField {
   type: "radio-group"
   options: FieldOption[]
+  orientation: GroupOrientation
 }
-
-export type CheckboxGroupOrientation = "vertical" | "horizontal" | "responsive"
-
-export type DescriptionPosition = "above-control" | "below-control"
 
 export interface CheckboxGroupField extends BaseField {
   type: "checkbox-group"
   options: FieldOption[]
-  orientation: CheckboxGroupOrientation
+  orientation: GroupOrientation
 }
 
 export type FormField =
