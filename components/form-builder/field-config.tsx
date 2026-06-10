@@ -1,7 +1,16 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { PlusIcon, Trash2Icon, ChevronDownIcon } from "lucide-react"
+import { PlusIcon, Trash2Icon, ChevronDownIcon, XIcon } from "lucide-react"
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@/components/ui/combobox"
 import type {
   FormField,
   InputType,
@@ -66,6 +75,53 @@ function SwitchRow({
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} size="sm" />
     </div>
+  )
+}
+
+function MultiSelectCombobox({
+  options,
+  value,
+  onChange,
+}: {
+  options: import("@/lib/form-builder/types").FieldOption[]
+  value: string[]
+  onChange: (v: string[]) => void
+}) {
+  const items = options.map((o) => o.value)
+
+  const displayText =
+    value.length === 0
+      ? "No default"
+      : value.length === 1
+        ? (options.find((o) => o.value === value[0])?.label ?? value[0])
+        : `${value.length} selected`
+
+  return (
+    <Combobox
+      multiple
+      items={items}
+      value={value as never}
+      onValueChange={onChange as never}
+      disabled={options.length === 0}
+    >
+      <ComboboxTrigger className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-[13px] data-disabled:cursor-not-allowed data-disabled:opacity-50">
+        <span className="truncate">{displayText}</span>
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput showTrigger={false} placeholder="Search options..." />
+        <ComboboxEmpty>No options found.</ComboboxEmpty>
+        <ComboboxList>
+          {(item: string) => {
+            const option = options.find((o) => o.value === item)
+            return (
+              <ComboboxItem key={item} value={item}>
+                {option?.label ?? item}
+              </ComboboxItem>
+            )
+          }}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   )
 }
 
@@ -203,7 +259,14 @@ export function FieldConfig({ field }: FieldConfigProps) {
               </SelectTrigger>
               <SelectContent>
                 {(
-                  ["text", "number", "email", "password", "url", "tel"] as InputType[]
+                  [
+                    "text",
+                    "number",
+                    "email",
+                    "password",
+                    "url",
+                    "tel",
+                  ] as InputType[]
                 ).map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -251,6 +314,126 @@ export function FieldConfig({ field }: FieldConfigProps) {
           </Tabs>
         </LabeledRow>
       </div>
+
+      {/* Default value — excluded for password subtype */}
+      {!(field.type === "input" && field.inputType === "password") && (
+        <>
+          <Separator />
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Default Value
+              </p>
+              {field.defaultValue !== undefined && (
+                <button
+                  onClick={() =>
+                    updateField(field.id, { defaultValue: undefined })
+                  }
+                  className="text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <XIcon className="size-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Text-like inputs */}
+            {(field.type === "textarea" ||
+              (field.type === "input" &&
+                ["text", "email", "url", "tel"].includes(field.inputType))) && (
+              <Input
+                value={(field.defaultValue as string | undefined) ?? ""}
+                onChange={(e) =>
+                  updateField(field.id, {
+                    defaultValue:
+                      e.target.value === "" ? undefined : e.target.value,
+                  })
+                }
+                placeholder="Enter default value"
+                type={
+                  field.type === "input" &&
+                  ["email", "url", "tel"].includes(field.inputType)
+                    ? field.inputType
+                    : "text"
+                }
+                className="h-7 text-xs"
+              />
+            )}
+
+            {/* Number input */}
+            {field.type === "input" && field.inputType === "number" && (
+              <Input
+                type="number"
+                value={(field.defaultValue as number | undefined) ?? ""}
+                onChange={(e) => {
+                  const raw = Number(e.target.value)
+                  updateField(field.id, {
+                    defaultValue:
+                      e.target.value === "" || isNaN(raw) ? undefined : raw,
+                  })
+                }}
+                placeholder="Enter default value"
+                className="h-7 text-xs"
+              />
+            )}
+
+            {/* Boolean toggle */}
+            {(field.type === "checkbox" || field.type === "switch") && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {field.defaultValue === true ? "true" : "false"}
+                </span>
+                <Switch
+                  checked={field.defaultValue === true}
+                  onCheckedChange={(v) =>
+                    updateField(field.id, {
+                      defaultValue: v ? true : undefined,
+                    })
+                  }
+                  size="sm"
+                />
+              </div>
+            )}
+
+            {/* Select / RadioGroup: single option picker */}
+            {(field.type === "select" || field.type === "radio-group") && (
+              <Select
+                value={(field.defaultValue as string | undefined) ?? ""}
+                onValueChange={(v) =>
+                  updateField(field.id, {
+                    defaultValue: !v || v === "" ? undefined : v,
+                  })
+                }
+                disabled={field.options.length === 0}
+              >
+                <SelectTrigger className="h-7 w-full text-xs">
+                  <SelectValue placeholder="No default" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">— No default —</SelectItem>
+                  {field.options.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* CheckboxGroup: multi-select */}
+            {field.type === "checkbox-group" && (
+              <MultiSelectCombobox
+                options={field.options}
+                value={(field.defaultValue as string[] | undefined) ?? []}
+                onChange={(v) =>
+                  updateField(field.id, {
+                    defaultValue: v.length === 0 ? undefined : v,
+                  })
+                }
+              />
+            )}
+          </div>
+        </>
+      )}
 
       <Separator />
 

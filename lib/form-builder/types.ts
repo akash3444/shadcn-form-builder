@@ -24,6 +24,7 @@ interface BaseField {
   descriptionPosition: DescriptionPosition
   required: boolean
   disabled: boolean
+  defaultValue?: string | number | boolean | string[]
 }
 
 export interface NumberValidation {

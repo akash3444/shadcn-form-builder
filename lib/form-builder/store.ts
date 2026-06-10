@@ -161,12 +161,25 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
               (f.type !== "select" && f.type !== "radio-group" && f.type !== "checkbox-group")
             )
               return f
-            return {
-              ...f,
-              options: f.options.map((o) =>
-                o.id === optionId ? { ...o, ...updates } : o
-              ),
+            const updatedOptions = f.options.map((o) =>
+              o.id === optionId ? { ...o, ...updates } : o
+            )
+            // If the option value changed, clear any defaultValue that referenced the old value
+            if (updates.value !== undefined) {
+              const oldValue = f.options.find((o) => o.id === optionId)?.value
+              if (oldValue !== undefined && oldValue !== updates.value) {
+                const newValidValues = new Set(updatedOptions.map((o) => o.value))
+                let defaultValue: typeof f.defaultValue = f.defaultValue
+                if (f.type === "checkbox-group" && Array.isArray(defaultValue)) {
+                  const filtered = defaultValue.filter((v) => newValidValues.has(v))
+                  defaultValue = filtered.length ? filtered : undefined
+                } else if (typeof defaultValue === "string" && !newValidValues.has(defaultValue)) {
+                  defaultValue = undefined
+                }
+                return { ...f, options: updatedOptions, defaultValue }
+              }
             }
+            return { ...f, options: updatedOptions }
           }),
         })),
 
@@ -178,10 +191,19 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
               (f.type !== "select" && f.type !== "radio-group" && f.type !== "checkbox-group")
             )
               return f
-            return {
-              ...f,
-              options: f.options.filter((o) => o.id !== optionId),
+            const remainingOptions = f.options.filter((o) => o.id !== optionId)
+            const removedValue = f.options.find((o) => o.id === optionId)?.value
+            let defaultValue: typeof f.defaultValue = f.defaultValue
+            if (removedValue !== undefined) {
+              const remainingValues = new Set(remainingOptions.map((o) => o.value))
+              if (f.type === "checkbox-group" && Array.isArray(defaultValue)) {
+                const filtered = defaultValue.filter((v) => remainingValues.has(v))
+                defaultValue = filtered.length ? filtered : undefined
+              } else if (typeof defaultValue === "string" && defaultValue === removedValue) {
+                defaultValue = undefined
+              }
             }
+            return { ...f, options: remainingOptions, defaultValue }
           }),
         })),
 

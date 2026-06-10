@@ -62,6 +62,12 @@ function getZodType(field: FormField): string {
 }
 
 function getDefaultValue(field: FormField): string {
+  if (field.defaultValue !== undefined) {
+    if (typeof field.defaultValue === "string") return JSON.stringify(field.defaultValue)
+    if (typeof field.defaultValue === "number") return String(field.defaultValue)
+    if (typeof field.defaultValue === "boolean") return String(field.defaultValue)
+    if (Array.isArray(field.defaultValue)) return JSON.stringify(field.defaultValue)
+  }
   switch (field.type) {
     case "input":
       return (field as InputField).inputType === "number" ? "undefined" : '""'

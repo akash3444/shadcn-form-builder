@@ -112,6 +112,10 @@ function buildSchema(fields: FormField[]) {
 function buildDefaultValues(fields: FormField[]): Record<string, unknown> {
   const defaults: Record<string, unknown> = {}
   for (const field of fields) {
+    if (field.defaultValue !== undefined) {
+      defaults[field.name] = field.defaultValue
+      continue
+    }
     switch (field.type) {
       case "input":
         defaults[field.name] = field.inputType === "number" ? undefined : ""
@@ -198,10 +202,13 @@ export function PreviewForm({
   })
 
   // Reset form when fields change to avoid stale field state
+  const fieldResetKey = JSON.stringify(
+    fields.map((f) => ({ name: f.name, defaultValue: f.defaultValue }))
+  )
   useEffect(() => {
     form.reset(buildDefaultValues(fields) as FormValues)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(fields.map((f) => f.name))])
+  }, [fieldResetKey])
 
   function onSubmit(values: FormValues) {
     toast.message("Form submitted", {
