@@ -26,14 +26,26 @@ interface BaseField {
   disabled: boolean
 }
 
+export interface NumberValidation {
+  min?: number
+  max?: number
+}
+
+export interface StringValidation {
+  minLength?: number
+  maxLength?: number
+}
+
 export interface InputField extends BaseField {
   type: "input"
   inputType: InputType
+  validation?: NumberValidation | StringValidation
 }
 
 export interface TextareaField extends BaseField {
   type: "textarea"
   rows: number
+  validation?: StringValidation
 }
 
 export interface CheckboxField extends BaseField {

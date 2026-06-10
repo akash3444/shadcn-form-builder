@@ -16,7 +16,11 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field"
-import type { FormField } from "@/lib/form-builder/types"
+import type {
+  FormField,
+  NumberValidation,
+  StringValidation,
+} from "@/lib/form-builder/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -49,24 +53,40 @@ function buildSchema(fields: FormField[]) {
     switch (field.type) {
       case "input": {
         if (field.inputType === "number") {
-          shape[field.name] = field.required
+          const v = (field.validation ?? {}) as NumberValidation
+          let n = field.required
             ? z.number({ required_error: "This field is required" })
-            : z.number().optional()
+            : z.number()
+          if (v.min !== undefined) n = n.min(v.min, `Must be at least ${v.min}`)
+          if (v.max !== undefined) n = n.max(v.max, `Must be at most ${v.max}`)
+          shape[field.name] = field.required ? n : n.optional()
           break
         }
+        const v = (field.validation ?? {}) as StringValidation
         let s = z.string()
         if (field.inputType === "email") s = s.email("Invalid email address")
         if (field.inputType === "url") s = s.url("Invalid URL")
-        shape[field.name] = field.required
-          ? s.min(1, "This field is required")
-          : s
+        if (field.required && !v.minLength) s = s.min(1, "This field is required")
+        if (v.minLength && field.required) s = s.min(v.minLength, `Must be at least ${v.minLength} characters`)
+        if (v.maxLength) s = s.max(v.maxLength, `Must be at most ${v.maxLength} characters`)
+        shape[field.name] =
+          v.minLength && !field.required
+            ? s.refine((val) => val.length === 0 || val.length >= v.minLength!, `Must be at least ${v.minLength} characters`)
+            : s
         break
       }
-      case "textarea":
-        shape[field.name] = field.required
-          ? z.string().min(1, "This field is required")
-          : z.string()
+      case "textarea": {
+        const v = (field.validation ?? {}) as StringValidation
+        let s = z.string()
+        if (field.required && !v.minLength) s = s.min(1, "This field is required")
+        if (v.minLength && field.required) s = s.min(v.minLength, `Must be at least ${v.minLength} characters`)
+        if (v.maxLength) s = s.max(v.maxLength, `Must be at most ${v.maxLength} characters`)
+        shape[field.name] =
+          v.minLength && !field.required
+            ? s.refine((val) => val.length === 0 || val.length >= v.minLength!, `Must be at least ${v.minLength} characters`)
+            : s
         break
+      }
       case "checkbox":
       case "switch":
         shape[field.name] = field.required

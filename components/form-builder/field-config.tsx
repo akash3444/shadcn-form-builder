@@ -1,13 +1,16 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { PlusIcon, Trash2Icon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { PlusIcon, Trash2Icon, ChevronDownIcon } from "lucide-react"
 import type {
   FormField,
   InputType,
   GroupOrientation,
   DescriptionPosition,
+  NumberValidation,
+  StringValidation,
 } from "@/lib/form-builder/types"
+import { cn } from "@/lib/utils"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { labelToKey } from "@/lib/form-builder/utils"
 import { Input } from "@/components/ui/input"
@@ -76,11 +79,57 @@ export function FieldConfig({ field }: FieldConfigProps) {
 
   const labelInputRef = useRef<HTMLInputElement>(null)
   const nameManuallyEdited = useRef(false)
+  const [validationOpen, setValidationOpen] = useState(false)
 
   useEffect(() => {
     nameManuallyEdited.current = false
+    setValidationOpen(false)
     labelInputRef.current?.focus()
   }, [field.id])
+
+  const showNumberValidation =
+    field.type === "input" && field.inputType === "number"
+  const showStringValidation =
+    field.type === "textarea" ||
+    (field.type === "input" &&
+      ["text", "password", "tel"].includes(field.inputType))
+  const hasValidation = showNumberValidation || showStringValidation
+
+  const numVal: NumberValidation =
+    field.type === "input" && field.inputType === "number"
+      ? ((field.validation ?? {}) as NumberValidation)
+      : {}
+
+  const strVal: StringValidation =
+    field.type === "input" || field.type === "textarea"
+      ? ((field.validation ?? {}) as StringValidation)
+      : {}
+
+  const numError =
+    numVal.min !== undefined &&
+    numVal.max !== undefined &&
+    numVal.min > numVal.max
+      ? "Min must be ≤ max"
+      : ""
+
+  const strError =
+    strVal.minLength !== undefined &&
+    strVal.maxLength !== undefined &&
+    strVal.minLength > strVal.maxLength
+      ? "Min must be ≤ max"
+      : ""
+
+  function patchNumVal(patch: Partial<NumberValidation>) {
+    updateField(field.id, {
+      validation: { ...numVal, ...patch },
+    } as Partial<FormField>)
+  }
+
+  function patchStrVal(patch: Partial<StringValidation>) {
+    updateField(field.id, {
+      validation: { ...strVal, ...patch },
+    } as Partial<FormField>)
+  }
 
   function handleLabelChange(label: string) {
     const updates: Partial<FormField> = { label }
@@ -199,7 +248,10 @@ export function FieldConfig({ field }: FieldConfigProps) {
             <Select
               value={field.inputType}
               onValueChange={(v) =>
-                updateField(field.id, { inputType: v as InputType })
+                updateField(field.id, {
+                  inputType: v as InputType,
+                  validation: undefined,
+                })
               }
             >
               <SelectTrigger className="w-full">
@@ -266,6 +318,89 @@ export function FieldConfig({ field }: FieldConfigProps) {
               </SelectContent>
             </Select>
           </LabeledRow>
+        </>
+      )}
+
+      {/* Validation */}
+      {hasValidation && (
+        <>
+          <Separator />
+          <div className="space-y-2.5">
+            <button
+              className="flex w-full items-center justify-between"
+              onClick={() => setValidationOpen((v) => !v)}
+            >
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Validation
+              </p>
+              <ChevronDownIcon
+                className={cn(
+                  "size-3.5 text-muted-foreground transition-transform",
+                  validationOpen && "rotate-180"
+                )}
+              />
+            </button>
+
+            {validationOpen && (
+              <div className="space-y-1">
+                <div className="flex gap-2">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-[11px] text-muted-foreground">
+                      Min {showNumberValidation ? "value" : "length"}
+                    </label>
+                    <Input
+                      type="number"
+                      min={showNumberValidation ? undefined : 1}
+                      value={
+                        showNumberValidation
+                          ? (numVal.min ?? "")
+                          : (strVal.minLength ?? "")
+                      }
+                      placeholder="–"
+                      onChange={(e) => {
+                        const raw = Number(e.target.value)
+                        const v =
+                          e.target.value === "" || isNaN(raw) ? undefined : raw
+                        showNumberValidation
+                          ? patchNumVal({ min: v })
+                          : patchStrVal({ minLength: v })
+                      }}
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-[11px] text-muted-foreground">
+                      Max {showNumberValidation ? "value" : "length"}
+                    </label>
+                    <Input
+                      type="number"
+                      min={showNumberValidation ? undefined : 1}
+                      value={
+                        showNumberValidation
+                          ? (numVal.max ?? "")
+                          : (strVal.maxLength ?? "")
+                      }
+                      placeholder="–"
+                      onChange={(e) => {
+                        const raw = Number(e.target.value)
+                        const v =
+                          e.target.value === "" || isNaN(raw) ? undefined : raw
+                        showNumberValidation
+                          ? patchNumVal({ max: v })
+                          : patchStrVal({ maxLength: v })
+                      }}
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                </div>
+                {(numError || strError) && (
+                  <p className="text-xs text-destructive">
+                    {numError || strError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </>
       )}
 

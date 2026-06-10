@@ -5,6 +5,8 @@ import type {
   SelectField,
   RadioGroupField,
   CheckboxGroupField,
+  NumberValidation,
+  StringValidation,
 } from "./types"
 import { toPascalCase } from "./utils"
 
@@ -13,19 +15,32 @@ function getZodType(field: FormField): string {
     case "input": {
       const f = field as InputField
       if (f.inputType === "number") {
-        return f.required
+        const v = (f.validation ?? {}) as NumberValidation
+        let chain = f.required
           ? 'z.number({ required_error: "This field is required" })'
-          : "z.number().optional()"
+          : "z.number()"
+        if (v.min !== undefined) chain += `.min(${v.min}, "Must be at least ${v.min}")`
+        if (v.max !== undefined) chain += `.max(${v.max}, "Must be at most ${v.max}")`
+        if (!f.required) chain += ".optional()"
+        return chain
       }
+      const v = (f.validation ?? {}) as StringValidation
       let base = "z.string()"
       if (f.inputType === "email") base += '.email("Invalid email address")'
       if (f.inputType === "url") base += '.url("Invalid URL")'
-      if (f.required) base += '.min(1, "This field is required")'
+      if (f.required && !v.minLength) base += '.min(1, "This field is required")'
+      if (v.minLength && f.required) base += `.min(${v.minLength}, "Must be at least ${v.minLength} characters")`
+      if (v.maxLength) base += `.max(${v.maxLength}, "Must be at most ${v.maxLength} characters")`
+      if (v.minLength && !f.required) base += `.refine((v) => v.length === 0 || v.length >= ${v.minLength}, "Must be at least ${v.minLength} characters")`
       return base
     }
     case "textarea": {
+      const v = (field.validation ?? {}) as StringValidation
       let base = "z.string()"
-      if (field.required) base += '.min(1, "This field is required")'
+      if (field.required && !v.minLength) base += '.min(1, "This field is required")'
+      if (v.minLength && field.required) base += `.min(${v.minLength}, "Must be at least ${v.minLength} characters")`
+      if (v.maxLength) base += `.max(${v.maxLength}, "Must be at most ${v.maxLength} characters")`
+      if (v.minLength && !field.required) base += `.refine((v) => v.length === 0 || v.length >= ${v.minLength}, "Must be at least ${v.minLength} characters")`
       return base
     }
     case "checkbox":
