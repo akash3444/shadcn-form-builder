@@ -186,6 +186,33 @@ export function FieldConfig({ field }: FieldConfigProps) {
               />
             </LabeledRow>
           )}
+
+        {field.type === "input" && (
+          <LabeledRow label="Input type">
+            <Select
+              value={field.inputType}
+              onValueChange={(v) =>
+                updateField(field.id, {
+                  inputType: v as InputType,
+                  validation: undefined,
+                })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(
+                  ["text", "number", "email", "password", "url", "tel"] as InputType[]
+                ).map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </LabeledRow>
+        )}
       </div>
 
       <Separator />
@@ -239,37 +266,6 @@ export function FieldConfig({ field }: FieldConfigProps) {
           onChange={(v) => updateField(field.id, { disabled: v })}
         />
       </div>
-
-      {/* Input-specific: type selector */}
-      {field.type === "input" && (
-        <>
-          <Separator />
-          <LabeledRow label="Input type">
-            <Select
-              value={field.inputType}
-              onValueChange={(v) =>
-                updateField(field.id, {
-                  inputType: v as InputType,
-                  validation: undefined,
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(
-                  ["text", "email", "password", "url", "tel", "number"] as InputType[]
-                ).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </LabeledRow>
-        </>
-      )}
 
       {/* Textarea-specific: rows */}
       {field.type === "textarea" && (
