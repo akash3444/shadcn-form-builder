@@ -105,22 +105,21 @@ export function FieldEditor() {
         onValueChange={setActiveTab}
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
-        <TabsList
-          variant="line"
-          className="h-9 w-full shrink-0 justify-start gap-0 rounded-none px-1"
-        >
-          <TabsTrigger value="fields" className="px-3">
-            Fields
-            {fields.length > 0 && (
-              <span className="ml-1 text-muted-foreground">
-                ({fields.length})
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="presets" className="px-3">
-            Presets
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b px-4 py-2">
+          <TabsList className="w-full shrink-0 justify-start gap-0">
+            <TabsTrigger value="fields" className="px-3">
+              Fields
+              {fields.length > 0 && (
+                <span className="ml-1 text-muted-foreground">
+                  ({fields.length})
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="presets" className="px-3">
+              Presets
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent
           value="fields"
