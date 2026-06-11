@@ -58,7 +58,7 @@ function getZodType(field: FormField): string {
     case "checkbox-group":
       return field.required
         ? 'z.array(z.string()).min(1, "Select at least one option")'
-        : "z.array(z.string())"
+        : "z.array(z.string()).default([])"
     case "slider": {
       const f = field as SliderField
       return `z.number().min(${f.min}).max(${f.max})`
