@@ -113,13 +113,41 @@ function generateOptionsConst(
 ): string {
   const constName = getOptionsConstName(field.name)
   const rows = field.options
-    .map((o) => `  { label: "${o.label}", value: "${o.value}" },`)
+    .map((o) => `  { label: ${jsString(o.label)}, value: ${jsString(o.value)} },`)
     .join("\n")
   return `const ${constName} = [\n${rows}\n]`
 }
 
+/**
+ * Escapes a string for use as JSX text content (between tags). `{` and `}` would
+ * otherwise open a JS expression and `<`/`>` would start a tag, so they are
+ * encoded as HTML entities, which JSX decodes back to the literal characters.
+ */
+function escapeJsxText(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\{/g, "&#123;")
+    .replace(/\}/g, "&#125;")
+}
+
+/** Escapes a string for use inside a double-quoted JSX attribute value. */
+function escapeJsxAttr(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+}
+
+/** Renders a string as a valid double-quoted JS string literal. */
+function jsString(str: string): string {
+  return JSON.stringify(str)
+}
+
 function generateFieldJSX(field: FormField): string {
-  const label = field.label || "Field"
+  const label = escapeJsxText(field.label || "Field")
   const { description, descriptionPosition } = field
 
   const requiredSpan = field.required
@@ -128,7 +156,7 @@ function generateFieldJSX(field: FormField): string {
 
   const descEl = (pos: "above-control" | "below-control") =>
     description && descriptionPosition === pos
-      ? `\n  <FieldDescription>${description}</FieldDescription>`
+      ? `\n  <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
       : ""
 
   const errorEl = `\n  <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>`
@@ -140,7 +168,7 @@ function generateFieldJSX(field: FormField): string {
         f.inputType === "number"
           ? `id="${f.name}"
         type="number"
-        placeholder="${f.placeholder}"
+        placeholder="${escapeJsxAttr(f.placeholder)}"
         disabled={${f.disabled}}
         aria-invalid={fieldState.invalid}
         value={field.value ?? ""}
@@ -150,7 +178,7 @@ function generateFieldJSX(field: FormField): string {
         ref={field.ref}`
           : `id="${f.name}"
         type="${f.inputType}"
-        placeholder="${f.placeholder}"
+        placeholder="${escapeJsxAttr(f.placeholder)}"
         disabled={${f.disabled}}
         aria-invalid={fieldState.invalid}
         {...field}`
@@ -182,7 +210,7 @@ function generateFieldJSX(field: FormField): string {
     render={({ field, fieldState }) => (
       <Textarea
         id="${f.name}"
-        placeholder="${f.placeholder}"
+        placeholder="${escapeJsxAttr(f.placeholder)}"
         rows={${f.rows}}
         disabled={${f.disabled}}
         aria-invalid={fieldState.invalid}
@@ -196,7 +224,7 @@ function generateFieldJSX(field: FormField): string {
 
     case "checkbox": {
       const descInner = description
-        ? `\n    <FieldDescription>${description}</FieldDescription>`
+        ? `\n    <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
         : ""
       return `<Field orientation="horizontal" data-invalid={!!form.formState.errors.${field.name}} data-disabled={${field.disabled}}>
   <Controller
@@ -223,7 +251,7 @@ function generateFieldJSX(field: FormField): string {
 
     case "switch": {
       const descInner = description
-        ? `\n    <FieldDescription>${description}</FieldDescription>`
+        ? `\n    <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
         : ""
       return `<Field orientation="horizontal" data-invalid={!!form.formState.errors.${field.name}} data-disabled={${field.disabled}}>
   <FieldContent>
@@ -260,7 +288,7 @@ function generateFieldJSX(field: FormField): string {
     render={({ field, fieldState }) => (
       <Select value={String(field.value ?? "")} onValueChange={field.onChange} disabled={${f.disabled}} items={${constName}}>
         <SelectTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="w-full">
-          <SelectValue placeholder="${f.placeholder || "Select an option"}" />
+          <SelectValue placeholder="${escapeJsxAttr(f.placeholder) || "Select an option"}" />
         </SelectTrigger>
         <SelectContent>
           {${constName}.map((o) => (
@@ -476,7 +504,7 @@ ${defaultValues}
       <FieldGroup className="mb-6">
 ${fieldJSX}
       </FieldGroup>
-      <Button type="submit" className="w-full" size="lg">${submitLabel}</Button>
+      <Button type="submit" className="w-full" size="lg">${escapeJsxText(submitLabel)}</Button>
     </form>
   )
 }
