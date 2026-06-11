@@ -60,12 +60,18 @@ describe.each(FORM_PRESETS.map((p) => [p.id, p] as const))(
       expect(() => extractGeneratedSchema(code)).not.toThrow()
     })
 
-    it('generated schema agrees with the runtime schema on the default values', () => {
+    it('generated and runtime schemas agree on valid AND invalid input', () => {
       const code = generateFormCode(preset.formName, preset.submitLabel, preset.fields)
       const generated = extractGeneratedSchema(code)
       const runtime = buildSchema(preset.fields)
-      const defaults = buildDefaultValues(preset.fields)
-      expect(generated.safeParse(defaults).success).toBe(runtime.safeParse(defaults).success)
+      // Both the (valid) defaults and an empty object — the latter forces every
+      // required field to reject, so this isn't a trivial true===true smoke test.
+      for (const input of [buildDefaultValues(preset.fields), {}]) {
+        expect(
+          generated.safeParse(input).success,
+          `parity mismatch on ${JSON.stringify(input).slice(0, 60)}`
+        ).toBe(runtime.safeParse(input).success)
+      }
     })
   }
 )

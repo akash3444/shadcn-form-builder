@@ -59,13 +59,16 @@ const cases: ParityCase[] = [
   { name: 'checkbox (required)', field: makeCheckbox({ required: true }), samples: [false, true] },
   { name: 'switch (optional)', field: makeSwitch(), samples: [undefined, false, true] },
   { name: 'switch (required)', field: makeSwitch({ required: true }), samples: [false, true] },
-  { name: 'select (optional)', field: makeSelect(), samples: ['', 'usa'] },
-  { name: 'select (required)', field: makeSelect({ required: true }), samples: ['', 'usa'] },
-  { name: 'radio-group (optional)', field: makeRadioGroup(), samples: ['', 'male'] },
-  { name: 'radio-group (required)', field: makeRadioGroup({ required: true }), samples: ['', 'male'] },
-  { name: 'checkbox-group (optional)', field: makeCheckboxGroup(), samples: [undefined, [], ['sports']] },
-  { name: 'checkbox-group (required)', field: makeCheckboxGroup({ required: true }), samples: [[], ['sports']] },
-  { name: 'slider', field: makeSlider({ min: 0, max: 100 }), samples: [-1, 0, 50, 100, 101] },
+  // Non-string samples (42) ensure both sides are genuinely z.string() and not
+  // a permissive schema — otherwise optional string fields agree trivially.
+  { name: 'select (optional)', field: makeSelect(), samples: ['', 'usa', 42] },
+  { name: 'select (required)', field: makeSelect({ required: true }), samples: ['', 'usa', 42] },
+  { name: 'radio-group (optional)', field: makeRadioGroup(), samples: ['', 'male', 42] },
+  { name: 'radio-group (required)', field: makeRadioGroup({ required: true }), samples: ['', 'male', 42] },
+  { name: 'checkbox-group (optional)', field: makeCheckboxGroup(), samples: [undefined, [], ['sports'], 'notarray'] },
+  { name: 'checkbox-group (required)', field: makeCheckboxGroup({ required: true }), samples: [[], ['sports'], 'notarray'] },
+  // A string sample ("50") confirms both reject non-numbers; bounds confirm min/max.
+  { name: 'slider', field: makeSlider({ min: 0, max: 100 }), samples: [-1, 0, 50, 100, 101, '50', undefined] },
 ]
 
 describe('generator <-> preview schema parity', () => {
@@ -108,5 +111,8 @@ describe('generator <-> preview default-value parity', () => {
     const generated = new Function(`return ${match[1]}`)()
     const runtime = buildDefaultValues(allFields)
     expect(generated).toEqual(runtime)
+    // toEqual ignores undefined-valued keys, so assert the key SETS match too —
+    // this catches a field whose default is emitted on one side but not the other.
+    expect(Object.keys(generated).sort()).toEqual(Object.keys(runtime).sort())
   })
 })
