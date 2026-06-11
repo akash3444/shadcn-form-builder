@@ -7,6 +7,7 @@ import type {
   SwitchField,
   SelectField,
   RadioGroupField,
+  CheckboxGroupField,
 } from '../lib/form-builder/types'
 
 const makeInput = (overrides: Partial<InputField> = {}): InputField => ({
@@ -96,6 +97,45 @@ const makeRadioGroup = (overrides: Partial<RadioGroupField> = {}): RadioGroupFie
     { id: 'opt-2', label: 'Female', value: 'female' },
   ],
   ...overrides,
+})
+
+const makeCheckboxGroup = (
+  overrides: Partial<CheckboxGroupField> = {}
+): CheckboxGroupField => ({
+  id: 'id-1',
+  type: 'checkbox-group',
+  label: 'Interests',
+  name: 'interests',
+  placeholder: '',
+  description: '',
+  descriptionPosition: 'below-control' as const,
+  orientation: 'vertical' as const,
+  required: false,
+  disabled: false,
+  options: [
+    { id: 'opt-1', label: 'Sports', value: 'sports' },
+    { id: 'opt-2', label: 'Music', value: 'music' },
+  ],
+  ...overrides,
+})
+
+describe('generateFormCode — checkbox-group field', () => {
+  // The preview (preview-form.tsx buildSchema) uses z.array(z.string()).default([])
+  // for an optional checkbox-group. The generator MUST emit the same schema or the
+  // copied code validates differently than what the user saw in the preview.
+  it('generates z.array(z.string()).default([]) for an optional checkbox-group', () => {
+    const code = generateFormCode('My Form', 'Submit', [makeCheckboxGroup()])
+    expect(code).toContain('interests: z.array(z.string()).default([])')
+  })
+
+  it('adds .min(1) for a required checkbox-group', () => {
+    const code = generateFormCode('My Form', 'Submit', [
+      makeCheckboxGroup({ required: true }),
+    ])
+    expect(code).toContain(
+      'interests: z.array(z.string()).min(1, "Select at least one option")'
+    )
+  })
 })
 
 describe('generateFormCode — empty fields', () => {
