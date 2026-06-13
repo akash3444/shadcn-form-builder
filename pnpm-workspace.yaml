@@ -1,5 +1,10 @@
 packages: []
 
+# Supply-chain hardening: delay installs until a release has had time to be
+# vetted, and never accept a package whose trust signals weaken between updates.
+minimumReleaseAge: 10080 # 7 days, in minutes
+trustPolicy: no-downgrade
+
 allowBuilds:
   sharp: true
   unrs-resolver: true
