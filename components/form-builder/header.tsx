@@ -8,6 +8,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function BuilderHeader() {
   const clearForm = useFormBuilderStore((s) => s.clearForm)
@@ -28,17 +39,36 @@ export function BuilderHeader() {
       </div>
 
       {hasFields && (
-        <Tooltip>
-          <TooltipTrigger
-            render={<Button variant="destructive" onClick={clearForm} />}
-          >
-            <Trash2Icon />
-            Clear form
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Remove all fields and reset settings</p>
-          </TooltipContent>
-        </Tooltip>
+        <AlertDialog>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <AlertDialogTrigger render={<Button variant="destructive" />} />
+              }
+            >
+              <Trash2Icon />
+              Clear form
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Remove all fields and reset settings</p>
+            </TooltipContent>
+          </Tooltip>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear form?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all fields and reset all settings. This action
+                cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={clearForm}>
+                Clear form
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </header>
   )
