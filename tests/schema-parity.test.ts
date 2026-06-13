@@ -12,6 +12,7 @@ import {
   makeRadioGroup,
   makeCheckboxGroup,
   makeSlider,
+  makeCombobox,
 } from './fixtures'
 
 // ---------------------------------------------------------------------------
@@ -69,6 +70,13 @@ const cases: ParityCase[] = [
   { name: 'checkbox-group (required)', field: makeCheckboxGroup({ required: true }), samples: [[], ['sports'], 'notarray'] },
   // A string sample ("50") confirms both reject non-numbers; bounds confirm min/max.
   { name: 'slider', field: makeSlider({ min: 0, max: 100 }), samples: [-1, 0, 50, 100, 101, '50', undefined] },
+  // Single combobox behaves like select (z.string); multiple like checkbox-group
+  // (z.array). Non-matching-shape samples (42 / 'notarray') confirm both sides
+  // are genuinely string vs array, not a permissive schema.
+  { name: 'combobox single (optional)', field: makeCombobox(), samples: ['', 'react', 42] },
+  { name: 'combobox single (required)', field: makeCombobox({ required: true }), samples: ['', 'react', 42] },
+  { name: 'combobox multiple (optional)', field: makeCombobox({ multiple: true }), samples: [undefined, [], ['react'], 'notarray'] },
+  { name: 'combobox multiple (required)', field: makeCombobox({ multiple: true, required: true }), samples: [[], ['react'], 'notarray'] },
 ]
 
 describe('generator <-> preview schema parity', () => {
@@ -102,6 +110,8 @@ describe('generator <-> preview default-value parity', () => {
     makeRadioGroup({ name: 'gender' }),
     makeCheckboxGroup({ name: 'interests' }),
     makeSlider({ name: 'volume', defaultValue: undefined }),
+    makeCombobox({ name: 'fw' }),
+    makeCombobox({ name: 'fwMulti', multiple: true }),
   ]
 
   it('produces identical default values', () => {

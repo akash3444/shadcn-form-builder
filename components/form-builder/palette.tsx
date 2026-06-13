@@ -9,6 +9,7 @@ import {
   CircleDot,
   ListChecks,
   SlidersHorizontal,
+  TextSearch,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { FieldType } from "@/lib/form-builder/types"
@@ -65,6 +66,12 @@ const PALETTE_ITEMS: PaletteItem[] = [
     label: "Select",
     description: "Dropdown option picker",
     icon: ChevronsUpDown,
+  },
+  {
+    type: "combobox",
+    label: "Combobox",
+    description: "Searchable option picker",
+    icon: TextSearch,
   },
   {
     type: "radio-group",

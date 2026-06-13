@@ -49,3 +49,24 @@ export function uniqueName(desired: string, existing: Set<string>): string {
   while (existing.has(`${desired}${n}`)) n++
   return `${desired}${n}`
 }
+
+/**
+ * Coerces a combobox's configured default value when its `multiple` flag is
+ * toggled, so the default never holds the wrong shape for the new mode.
+ *   - single → multiple: a non-empty string becomes a one-element array.
+ *   - multiple → single: the first element of a non-empty array; otherwise unset.
+ * Anything that can't be sensibly carried over becomes `undefined` (no default).
+ */
+export function coerceComboboxDefault(
+  defaultValue: string | number | boolean | string[] | undefined,
+  toMultiple: boolean
+): string[] | string | undefined {
+  if (toMultiple) {
+    return typeof defaultValue === "string" && defaultValue !== ""
+      ? [defaultValue]
+      : undefined
+  }
+  return Array.isArray(defaultValue) && defaultValue.length > 0
+    ? defaultValue[0]
+    : undefined
+}

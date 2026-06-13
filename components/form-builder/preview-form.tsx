@@ -31,6 +31,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxClear,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+} from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -107,7 +121,14 @@ export function PreviewForm({
 
   // Reset form when fields change to avoid stale field state
   const fieldResetKey = JSON.stringify(
-    fields.map((f) => ({ name: f.name, defaultValue: f.defaultValue }))
+    fields.map((f) => ({
+      name: f.name,
+      defaultValue: f.defaultValue,
+      // The combobox value SHAPE depends on `multiple` (string vs string[]).
+      // Toggling it must re-init the form, or the control receives a stale
+      // value of the wrong shape.
+      multiple: f.type === "combobox" ? f.multiple : undefined,
+    }))
   )
   useEffect(() => {
     form.reset(buildDefaultValues(fields) as FormValues)
@@ -505,6 +526,201 @@ export function PreviewForm({
                     <FieldError>{error}</FieldError>
                   </Field>
                 )
+
+              case "combobox": {
+                const opts = field.options
+                const values = opts.map((o) => o.value)
+                const labelFor = (v: string) =>
+                  opts.find((o) => o.value === v)?.label ?? v
+                const placeholder =
+                  field.placeholder ||
+                  (field.multiple ? "Select options" : "Select an option")
+                const emptyText = field.emptyText || "No results found."
+                const searchPlaceholder = field.searchPlaceholder || "Search..."
+                const triggerClass =
+                  "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
+
+                return (
+                  <FieldWrapper
+                    key={field.id}
+                    label={field.label}
+                    required={field.required}
+                    description={field.description}
+                    descriptionPosition={field.descriptionPosition}
+                    error={error}
+                    htmlFor={field.name}
+                    disabled={field.disabled}
+                  >
+                    <Controller
+                      name={field.name}
+                      control={form.control}
+                      render={({ field: f, fieldState }) => {
+                        if (field.multiple) {
+                          const arr = Array.isArray(f.value)
+                            ? (f.value as string[])
+                            : []
+                          if (field.displayStyle === "input") {
+                            return (
+                              <Combobox
+                                multiple
+                                items={values}
+                                itemToStringLabel={labelFor}
+                                value={arr}
+                                onValueChange={f.onChange}
+                                disabled={field.disabled}
+                              >
+                                <ComboboxChips>
+                                  <ComboboxValue>
+                                    {(value: string[] | null) =>
+                                      (value ?? []).map((v) => (
+                                        <ComboboxChip key={v}>
+                                          {labelFor(v)}
+                                        </ComboboxChip>
+                                      ))
+                                    }
+                                  </ComboboxValue>
+                                  <ComboboxChipsInput
+                                    id={field.name}
+                                    placeholder={placeholder}
+                                    disabled={field.disabled}
+                                  />
+                                  {field.clearable && <ComboboxClear />}
+                                </ComboboxChips>
+                                <ComboboxContent>
+                                  <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                  <ComboboxList>
+                                    {(v: string) => (
+                                      <ComboboxItem key={v} value={v}>
+                                        {labelFor(v)}
+                                      </ComboboxItem>
+                                    )}
+                                  </ComboboxList>
+                                </ComboboxContent>
+                              </Combobox>
+                            )
+                          }
+                          return (
+                            <Combobox
+                              multiple
+                              items={values}
+                              itemToStringLabel={labelFor}
+                              value={arr}
+                              onValueChange={f.onChange}
+                              disabled={field.disabled}
+                            >
+                              <ComboboxTrigger
+                                id={field.name}
+                                aria-invalid={fieldState.invalid}
+                                disabled={field.disabled}
+                                className={triggerClass}
+                              >
+                                <span className="truncate">
+                                  {arr.length > 0 ? (
+                                    `${arr.length} selected`
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      {placeholder}
+                                    </span>
+                                  )}
+                                </span>
+                              </ComboboxTrigger>
+                              <ComboboxContent>
+                                <ComboboxInput
+                                  showTrigger={false}
+                                  showClear={field.clearable}
+                                  placeholder={searchPlaceholder}
+                                />
+                                <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                <ComboboxList>
+                                  {(v: string) => (
+                                    <ComboboxItem key={v} value={v}>
+                                      {labelFor(v)}
+                                    </ComboboxItem>
+                                  )}
+                                </ComboboxList>
+                              </ComboboxContent>
+                            </Combobox>
+                          )
+                        }
+
+                        const single =
+                          typeof f.value === "string" ? f.value : ""
+                        if (field.displayStyle === "trigger") {
+                          return (
+                            <Combobox
+                              items={values}
+                              itemToStringLabel={labelFor}
+                              value={single || null}
+                              onValueChange={(v) => f.onChange(v ?? "")}
+                              disabled={field.disabled}
+                            >
+                              <ComboboxTrigger
+                                id={field.name}
+                                aria-invalid={fieldState.invalid}
+                                disabled={field.disabled}
+                                className={triggerClass}
+                              >
+                                <span className="truncate">
+                                  {single ? (
+                                    labelFor(single)
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      {placeholder}
+                                    </span>
+                                  )}
+                                </span>
+                              </ComboboxTrigger>
+                              <ComboboxContent>
+                                <ComboboxInput
+                                  showTrigger={false}
+                                  showClear={field.clearable}
+                                  placeholder={searchPlaceholder}
+                                />
+                                <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                <ComboboxList>
+                                  {(v: string) => (
+                                    <ComboboxItem key={v} value={v}>
+                                      {labelFor(v)}
+                                    </ComboboxItem>
+                                  )}
+                                </ComboboxList>
+                              </ComboboxContent>
+                            </Combobox>
+                          )
+                        }
+
+                        return (
+                          <Combobox
+                            items={values}
+                            itemToStringLabel={labelFor}
+                            value={single || null}
+                            onValueChange={(v) => f.onChange(v ?? "")}
+                            disabled={field.disabled}
+                          >
+                            <ComboboxInput
+                              id={field.name}
+                              placeholder={placeholder}
+                              showClear={field.clearable}
+                              disabled={field.disabled}
+                              aria-invalid={fieldState.invalid}
+                            />
+                            <ComboboxContent>
+                              <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                              <ComboboxList>
+                                {(v: string) => (
+                                  <ComboboxItem key={v} value={v}>
+                                    {labelFor(v)}
+                                  </ComboboxItem>
+                                )}
+                              </ComboboxList>
+                            </ComboboxContent>
+                          </Combobox>
+                        )
+                      }}
+                    />
+                  </FieldWrapper>
+                )
+              }
             }
           })}
         </FieldGroup>

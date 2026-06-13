@@ -12,6 +12,7 @@ import {
   makeRadioGroup,
   makeCheckboxGroup,
   makeSlider,
+  makeCombobox,
 } from './fixtures'
 
 // Parse the generated TSX with the real TypeScript parser and return syntax
@@ -94,6 +95,46 @@ describe('generated code is syntactically valid TSX', () => {
     ]
     const code = generateFormCode(NASTY, NASTY, fields)
     expect(syntaxErrors(code)).toEqual([])
+  })
+
+  it('emits valid TSX for every combobox mode x display-style (and clearable)', () => {
+    const combos = [
+      { multiple: false, displayStyle: 'input' as const },
+      { multiple: false, displayStyle: 'trigger' as const },
+      { multiple: true, displayStyle: 'input' as const },
+      { multiple: true, displayStyle: 'trigger' as const },
+    ]
+    for (const c of combos) {
+      for (const clearable of [false, true]) {
+        const field = makeCombobox({ ...c, clearable, name: 'cb' })
+        const code = generateFormCode('Combo', 'Go', [field])
+        expect(
+          syntaxErrors(code),
+          `invalid TSX for ${JSON.stringify({ ...c, clearable })}`
+        ).toEqual([])
+      }
+    }
+  })
+
+  it('handles special characters in combobox text + options', () => {
+    const field = makeCombobox({
+      name: 'cb',
+      label: NASTY,
+      placeholder: NASTY,
+      description: NASTY,
+      searchPlaceholder: NASTY,
+      emptyText: NASTY,
+      options: [
+        { id: 'o1', label: NASTY, value: 'a"b\\c' },
+        { id: 'o2', label: '</option>', value: 'x' },
+      ],
+    })
+    expect(syntaxErrors(generateFormCode('F', 'Go', [field]))).toEqual([])
+    expect(
+      syntaxErrors(
+        generateFormCode('F', 'Go', [{ ...field, multiple: true }])
+      )
+    ).toEqual([])
   })
 
   it('handles both description positions and an empty form', () => {

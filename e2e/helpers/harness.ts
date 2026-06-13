@@ -161,6 +161,98 @@ export class Harness {
     return this.page.locator(`#${name}`).textContent()
   }
 
+  // --- combobox drivers ---
+  //
+  // The control with id=`name` is the input (input/chips styles) or the trigger
+  // button (trigger style). Clicking it opens the popup and focuses the relevant
+  // filter input in every variant, so these helpers are style-agnostic.
+
+  /** Open a combobox popup. */
+  async comboboxOpen(name: string) {
+    await this.page.locator(`#${name}`).click()
+    await expect(
+      this.page.locator('[data-slot="combobox-content"]')
+    ).toBeVisible()
+  }
+
+  /** Type into the focused combobox filter input (popup must be open). */
+  comboboxFilter(text: string) {
+    return this.page.keyboard.type(text)
+  }
+
+  /** Labels of the currently-visible options. */
+  async comboboxOptionLabels(): Promise<string[]> {
+    const items = this.page.locator('[data-slot="combobox-item"]')
+    return (await items.allTextContents()).map((t) => t.trim()).filter(Boolean)
+  }
+
+  /** Whether the empty-state message is visible. */
+  comboboxEmptyVisible(text: string | RegExp) {
+    return this.page
+      .locator('[data-slot="combobox-empty"]')
+      .filter({ hasText: text })
+      .isVisible()
+  }
+
+  /** Click a visible option by its exact label (popup already open). */
+  async comboboxChoose(optionLabel: string) {
+    await this.page
+      .locator('[data-slot="combobox-item"]')
+      .filter({ hasText: new RegExp(`^\\s*${escapeRegExp(optionLabel)}\\s*$`) })
+      .first()
+      .click()
+  }
+
+  /** Close an open combobox popup (multiple mode keeps it open after a pick). */
+  async comboboxClose() {
+    await this.page.keyboard.press("Escape")
+    await expect(
+      this.page.locator('[data-slot="combobox-content"]')
+    ).toBeHidden()
+  }
+
+  /** Open and choose an option by its exact label (single-pick convenience). */
+  async comboboxPick(name: string, optionLabel: string) {
+    await this.comboboxOpen(name)
+    await this.comboboxChoose(optionLabel)
+  }
+
+  /** Selected chip labels (multiple + input style). */
+  async comboboxChips(name: string): Promise<string[]> {
+    void name
+    const chips = this.form().locator('[data-slot="combobox-chip"]')
+    return (await chips.allTextContents()).map((t) => t.trim()).filter(Boolean)
+  }
+
+  /** Remove a single chip by its label (multiple + input style). */
+  comboboxRemoveChip(label: string) {
+    return this.form()
+      .locator('[data-slot="combobox-chip"]')
+      .filter({ hasText: new RegExp(`^\\s*${escapeRegExp(label)}\\s*$`) })
+      .locator('[data-slot="combobox-chip-remove"]')
+      .click()
+  }
+
+  /** Whether a clear (×) affordance is present. */
+  comboboxClearCount() {
+    return this.page.locator('[data-slot="combobox-clear"]').count()
+  }
+
+  /** Click the clear (×) affordance. */
+  comboboxClear() {
+    return this.page.locator('[data-slot="combobox-clear"]').first().click()
+  }
+
+  /** The text shown in a trigger-style combobox. */
+  comboboxTriggerText(name: string) {
+    return this.page.locator(`#${name}`).textContent()
+  }
+
+  /** The input value of an input-style combobox (its selected label). */
+  comboboxInputValue(name: string) {
+    return this.page.locator(`#${name}`).inputValue()
+  }
+
   /**
    * Resolve whether two options of a radio/checkbox group are laid out
    * horizontally (side by side) or vertically (stacked), from on-screen
@@ -176,6 +268,10 @@ export class Harness {
     if (!a || !b) throw new Error("options-layout: missing bounding box")
     return b.y > a.y + a.height / 2 ? "vertical" : "horizontal"
   }
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 type Win = Window & {

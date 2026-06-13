@@ -6,6 +6,7 @@
 import type {
   CheckboxField,
   CheckboxGroupField,
+  ComboboxField,
   FieldOption,
   FormField,
   InputField,
@@ -121,4 +122,23 @@ export function slider(
   opts: Partial<SliderField> = {}
 ): SliderField {
   return { ...base(name, label), type: "slider", min: 0, max: 100, step: 1, ...opts }
+}
+
+export function combobox(
+  name: string,
+  label: string,
+  values: [string, string][],
+  opts: Partial<ComboboxField> = {}
+): ComboboxField {
+  return {
+    ...base(name, label),
+    type: "combobox",
+    multiple: false,
+    displayStyle: "input",
+    searchPlaceholder: "Search...",
+    emptyText: "No results found.",
+    clearable: false,
+    options: options(name, values),
+    ...opts,
+  }
 }
