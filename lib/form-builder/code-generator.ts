@@ -7,102 +7,23 @@ import type {
   CheckboxGroupField,
   SliderField,
   ComboboxField,
-  NumberValidation,
-  StringValidation,
 } from "./types"
 import { toPascalCase } from "./utils"
+import {
+  fieldSchemaSpec,
+  serializeSpec,
+  defaultValueFor,
+  serializeDefault,
+} from "./validation-spec"
 
+/** Emits the Zod schema source for a field (mirror of the live schema). */
 function getZodType(field: FormField): string {
-  switch (field.type) {
-    case "input": {
-      const f = field as InputField
-      if (f.inputType === "number") {
-        const v = (f.validation ?? {}) as NumberValidation
-        let chain = f.required
-          ? 'z.number({ required_error: "This field is required" })'
-          : "z.number()"
-        if (v.min !== undefined) chain += `.min(${v.min}, "Must be at least ${v.min}")`
-        if (v.max !== undefined) chain += `.max(${v.max}, "Must be at most ${v.max}")`
-        if (!f.required) chain += ".optional()"
-        return chain
-      }
-      const v = (f.validation ?? {}) as StringValidation
-      let base = "z.string()"
-      if (f.inputType === "email") base += '.email("Invalid email address")'
-      if (f.inputType === "url") base += '.url("Invalid URL")'
-      if (f.required && !v.minLength) base += '.min(1, "This field is required")'
-      if (v.minLength && f.required) base += `.min(${v.minLength}, "Must be at least ${v.minLength} characters")`
-      if (v.maxLength) base += `.max(${v.maxLength}, "Must be at most ${v.maxLength} characters")`
-      if (v.minLength && !f.required) base += `.refine((v) => v.length === 0 || v.length >= ${v.minLength}, "Must be at least ${v.minLength} characters")`
-      return base
-    }
-    case "textarea": {
-      const v = (field.validation ?? {}) as StringValidation
-      let base = "z.string()"
-      if (field.required && !v.minLength) base += '.min(1, "This field is required")'
-      if (v.minLength && field.required) base += `.min(${v.minLength}, "Must be at least ${v.minLength} characters")`
-      if (v.maxLength) base += `.max(${v.maxLength}, "Must be at most ${v.maxLength} characters")`
-      if (v.minLength && !field.required) base += `.refine((v) => v.length === 0 || v.length >= ${v.minLength}, "Must be at least ${v.minLength} characters")`
-      return base
-    }
-    case "checkbox":
-    case "switch":
-      return field.required
-        ? 'z.boolean().refine((val) => val === true, "This field is required")'
-        : "z.boolean().default(false)"
-    case "select":
-    case "radio-group": {
-      let base = "z.string()"
-      if (field.required) base += '.min(1, "Please select an option")'
-      return base
-    }
-    case "checkbox-group":
-      return field.required
-        ? 'z.array(z.string()).min(1, "Select at least one option")'
-        : "z.array(z.string()).default([])"
-    case "combobox": {
-      if (field.multiple) {
-        return field.required
-          ? 'z.array(z.string()).min(1, "Select at least one option")'
-          : "z.array(z.string()).default([])"
-      }
-      let base = "z.string()"
-      if (field.required) base += '.min(1, "Please select an option")'
-      return base
-    }
-    case "slider": {
-      const f = field as SliderField
-      return `z.number().min(${f.min}).max(${f.max})`
-    }
-  }
+  return serializeSpec(fieldSchemaSpec(field))
 }
 
+/** Emits the default-value literal for a field (mirror of the live default). */
 function getDefaultValue(field: FormField): string {
-  if (field.defaultValue !== undefined) {
-    if (typeof field.defaultValue === "string") return JSON.stringify(field.defaultValue)
-    if (typeof field.defaultValue === "number") return String(field.defaultValue)
-    if (typeof field.defaultValue === "boolean") return String(field.defaultValue)
-    if (Array.isArray(field.defaultValue)) return JSON.stringify(field.defaultValue)
-  }
-  switch (field.type) {
-    case "input":
-      return (field as InputField).inputType === "number" ? "undefined" : '""'
-    case "textarea":
-    case "select":
-    case "radio-group":
-      return '""'
-    case "checkbox":
-    case "switch":
-      return "false"
-    case "checkbox-group":
-      return "[]"
-    case "combobox":
-      return field.multiple ? "[]" : '""'
-    case "slider": {
-      const f = field as SliderField
-      return String(f.min + (f.max - f.min) / 2)
-    }
-  }
+  return serializeDefault(defaultValueFor(field))
 }
 
 function indent(str: string, spaces: number): string {
