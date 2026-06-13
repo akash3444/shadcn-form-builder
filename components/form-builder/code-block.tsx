@@ -2,7 +2,21 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { codeToHtml } from "shiki"
+import type { Highlighter } from "shiki"
+
+const THEMES = ["github-dark-default", "github-light"] as const
+
+// Load Shiki lazily (keeps it out of the initial bundle) and create a single
+// highlighter with only the language and themes we use, reused across renders.
+let highlighterPromise: Promise<Highlighter> | null = null
+function getHighlighter() {
+  if (!highlighterPromise) {
+    highlighterPromise = import("shiki").then((shiki) =>
+      shiki.createHighlighter({ langs: ["tsx"], themes: [...THEMES] })
+    )
+  }
+  return highlighterPromise
+}
 
 interface CodeBlockProps {
   code: string
@@ -18,8 +32,9 @@ export function CodeBlock({ code }: CodeBlockProps) {
     const theme =
       resolvedTheme === "dark" ? "github-dark-default" : "github-light"
 
-    codeToHtml(code, { lang: "tsx", theme }).then((result) => {
-      if (!cancelled) setHtml(result)
+    getHighlighter().then((highlighter) => {
+      if (cancelled) return
+      setHtml(highlighter.codeToHtml(code, { lang: "tsx", theme }))
     })
 
     return () => {
