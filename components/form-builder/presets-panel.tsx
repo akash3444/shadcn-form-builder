@@ -49,6 +49,7 @@ export function PresetsPanel({ onLoad }: PresetsPanelProps) {
           return (
             <button
               key={preset.id}
+              type="button"
               onClick={() => handleCardClick(preset)}
               className={cn(
                 "flex flex-col gap-3 rounded-lg border bg-background p-3 text-left transition-colors",

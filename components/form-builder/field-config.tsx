@@ -318,6 +318,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
             </p>
             {field.defaultValue !== undefined && (
               <button
+                type="button"
                 onClick={() =>
                   updateField(field.id, { defaultValue: undefined })
                 }
@@ -667,6 +668,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
       {hasValidation && (
         <div className="space-y-2.5">
           <button
+            type="button"
             className="flex w-full items-center justify-between"
             onClick={() => setValidationOpen((v) => !v)}
           >
@@ -786,6 +788,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
                   className="h-7 w-24 shrink-0 font-mono text-xs"
                 />
                 <button
+                  type="button"
                   onClick={() => removeOption(field.id, option.id)}
                   disabled={field.options.length <= 1}
                   className="shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-30"
