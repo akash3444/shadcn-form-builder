@@ -1,5 +1,6 @@
 import type {
   FormField,
+  FormLibrary,
   InputField,
   TextareaField,
   SelectField,
@@ -10,94 +11,27 @@ import type {
 } from "./types"
 import { toPascalCase } from "./utils"
 import {
-  fieldSchemaSpec,
-  serializeSpec,
-  defaultValueFor,
-  serializeDefault,
-} from "./validation-spec"
-
-/** Emits the Zod schema source for a field (mirror of the live schema). */
-function getZodType(field: FormField): string {
-  return serializeSpec(fieldSchemaSpec(field))
-}
-
-/** Emits the default-value literal for a field (mirror of the live default). */
-function getDefaultValue(field: FormField): string {
-  return serializeDefault(defaultValueFor(field))
-}
-
-function indent(str: string, spaces: number): string {
-  const pad = " ".repeat(spaces)
-  return str
-    .split("\n")
-    .map((line) => (line.trim() === "" ? "" : pad + line))
-    .join("\n")
-}
-
-function toScreamingSnakeCase(str: string): string {
-  return str.replace(/([A-Z])/g, "_$1").toUpperCase()
-}
-
-function getOptionsConstName(fieldName: string): string {
-  return `${toScreamingSnakeCase(fieldName)}_OPTIONS`
-}
-
-function generateOptionsConst(
-  field: SelectField | RadioGroupField | CheckboxGroupField | ComboboxField
-): string {
-  const constName = getOptionsConstName(field.name)
-  const rows = field.options
-    .map((o) => `  { label: ${jsString(o.label)}, value: ${jsString(o.value)} },`)
-    .join("\n")
-  return `const ${constName} = [\n${rows}\n]`
-}
-
-/**
- * Escapes a string for use as JSX text content (between tags). `{` and `}` would
- * otherwise open a JS expression and `<`/`>` would start a tag, so they are
- * encoded as HTML entities, which JSX decodes back to the literal characters.
- */
-function escapeJsxText(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\{/g, "&#123;")
-    .replace(/\}/g, "&#125;")
-}
-
-/** Escapes a string for use inside a double-quoted JSX attribute value. */
-function escapeJsxAttr(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-}
-
-/** Renders a string as a valid double-quoted JS string literal. */
-function jsString(str: string): string {
-  return JSON.stringify(str)
-}
-
-/** Emits a JSX placeholder attribute, using an expression for multiline values. */
-function placeholderProp(str: string): string {
-  if (!str.includes("\n")) return `placeholder="${escapeJsxAttr(str)}"`
-  return `placeholder={${jsString(str)}}`
-}
+  indent,
+  getOptionsConstName,
+  escapeJsxText,
+  escapeJsxAttr,
+  placeholderProp,
+  labelText,
+  requiredSpan,
+  descEl,
+  buildImports,
+  buildOptionsSection,
+  buildSchemaBlock,
+  buildDefaultValueLines,
+} from "./codegen-shared"
+import { generateTanstackFormCode } from "./code-generator-tanstack"
 
 function generateFieldJSX(field: FormField): string {
-  const label = escapeJsxText(field.label || "Field")
-  const { description, descriptionPosition } = field
-
-  const requiredSpan = field.required
-    ? `{" "}<span className="text-destructive">*</span>`
+  const label = labelText(field)
+  const reqSpan = requiredSpan(field)
+  const descInner = field.description
+    ? `\n    <FieldDescription>${escapeJsxText(field.description)}</FieldDescription>`
     : ""
-
-  const descEl = (pos: "above-control" | "below-control") =>
-    description && descriptionPosition === pos
-      ? `\n  <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
-      : ""
 
   const errorEl = `\n  <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>`
 
@@ -122,8 +56,8 @@ function generateFieldJSX(field: FormField): string {
         {...field}`
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}">
-    ${label}${requiredSpan}
-  </FieldLabel>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -132,7 +66,7 @@ function generateFieldJSX(field: FormField): string {
         ${inputProps}
       />
     )}
-  />${descEl("below-control")}${errorEl}
+  />${descEl(field, "below-control")}${errorEl}
 </Field>`
     }
 
@@ -140,8 +74,8 @@ function generateFieldJSX(field: FormField): string {
       const f = field as TextareaField
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}">
-    ${label}${requiredSpan}
-  </FieldLabel>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -155,14 +89,11 @@ function generateFieldJSX(field: FormField): string {
         {...field}
       />
     )}
-  />${descEl("below-control")}${errorEl}
+  />${descEl(field, "below-control")}${errorEl}
 </Field>`
     }
 
     case "checkbox": {
-      const descInner = description
-        ? `\n    <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
-        : ""
       return `<Field orientation="horizontal" data-invalid={!!form.formState.errors.${field.name}}>
   <Controller
     name="${field.name}"
@@ -178,7 +109,7 @@ function generateFieldJSX(field: FormField): string {
   />
   <FieldContent>
     <FieldLabel htmlFor="${field.name}">
-      ${label}${requiredSpan}
+      ${label}${reqSpan}
     </FieldLabel>${descInner}
     <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>
   </FieldContent>
@@ -186,13 +117,10 @@ function generateFieldJSX(field: FormField): string {
     }
 
     case "switch": {
-      const descInner = description
-        ? `\n    <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
-        : ""
       return `<Field orientation="horizontal" data-invalid={!!form.formState.errors.${field.name}}>
   <FieldContent>
     <FieldLabel htmlFor="${field.name}">
-      ${label}${requiredSpan}
+      ${label}${reqSpan}
     </FieldLabel>${descInner}
     <FieldError>{form.formState.errors.${field.name}?.message}</FieldError>
   </FieldContent>
@@ -215,8 +143,8 @@ function generateFieldJSX(field: FormField): string {
       const constName = getOptionsConstName(f.name)
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}">
-    ${label}${requiredSpan}
-  </FieldLabel>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -232,7 +160,7 @@ function generateFieldJSX(field: FormField): string {
         </SelectContent>
       </Select>
     )}
-  />${descEl("below-control")}${errorEl}
+  />${descEl(field, "below-control")}${errorEl}
 </Field>`
     }
 
@@ -244,8 +172,8 @@ function generateFieldJSX(field: FormField): string {
         : "flex flex-col gap-3"
       return `<FieldSet>
   <FieldLegend variant="label">
-    ${label}${requiredSpan}
-  </FieldLegend>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLegend>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -259,7 +187,7 @@ function generateFieldJSX(field: FormField): string {
         ))}
       </RadioGroup>
     )}
-  />${descEl("below-control")}
+  />${descEl(field, "below-control")}
   <FieldError>{form.formState.errors.${f.name}?.message}</FieldError>
 </FieldSet>`
     }
@@ -272,8 +200,8 @@ function generateFieldJSX(field: FormField): string {
         : "flex flex-col gap-3"
       return `<FieldSet>
   <FieldLegend variant="label">
-    ${label}${requiredSpan}
-  </FieldLegend>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLegend>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -298,7 +226,7 @@ function generateFieldJSX(field: FormField): string {
         ))}
       </div>
     )}
-  />${descEl("below-control")}
+  />${descEl(field, "below-control")}
   <FieldError>{form.formState.errors.${f.name}?.message}</FieldError>
 </FieldSet>`
     }
@@ -314,7 +242,7 @@ function generateFieldJSX(field: FormField): string {
         <div className="flex items-center justify-between">
           <FieldLabel>${label}</FieldLabel>
           <span className="text-sm font-medium tabular-nums">{field.value}</span>
-        </div>${descEl("above-control")}
+        </div>${descEl(field, "above-control")}
         <Slider
           value={field.value}
           onValueChange={field.onChange}
@@ -324,7 +252,7 @@ function generateFieldJSX(field: FormField): string {
         />
       </>
     )}
-  />${descEl("below-control")}${errorEl}
+  />${descEl(field, "below-control")}${errorEl}
 </Field>`
     }
 
@@ -370,7 +298,7 @@ function generateFieldJSX(field: FormField): string {
       if (f.multiple && f.displayStyle === "input") {
         control = `<ComboboxChips>
           <ComboboxValue>
-            {(value) =>
+            {(value: string[] | null) =>
               (value ?? []).map((v) => (
                 <ComboboxChip key={v}>
                   {${constName}.find((o) => o.value === v)?.label ?? v}
@@ -414,8 +342,8 @@ function generateFieldJSX(field: FormField): string {
 
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}">
-    ${label}${requiredSpan}
-  </FieldLabel>${descEl("above-control")}
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
   <Controller
     name="${f.name}"
     control={form.control}
@@ -426,102 +354,14 @@ function generateFieldJSX(field: FormField): string {
         ${control}
       </Combobox>
     )}
-  />${descEl("below-control")}${errorEl}
+  />${descEl(field, "below-control")}${errorEl}
 </Field>`
     }
   }
 }
 
-function getRequiredImports(fields: FormField[]): string {
-  const types = new Set(fields.map((f) => f.type))
-  const hasDescription = fields.some((f) => f.description)
-  const hasHorizontal = types.has("checkbox") || types.has("switch")
-  const hasGrouped = types.has("radio-group") || types.has("checkbox-group")
-  const fieldComponents = [
-    "Field",
-    ...(hasHorizontal ? ["FieldContent"] : []),
-    ...(hasDescription ? ["FieldDescription"] : []),
-    "FieldError",
-    "FieldGroup",
-    "FieldLabel",
-    ...(hasGrouped ? ["FieldLegend", "FieldSet"] : []),
-  ].join(", ")
-
-  const imports: string[] = [
-    '"use client"',
-    "",
-    'import { useForm, Controller } from "react-hook-form"',
-    'import { zodResolver } from "@hookform/resolvers/zod"',
-    'import { z } from "zod"',
-    "",
-    'import { Button } from "@/components/ui/button"',
-    `import { ${fieldComponents} } from "@/components/ui/field"`,
-  ]
-
-  if (types.has("input"))
-    imports.push('import { Input } from "@/components/ui/input"')
-  if (types.has("textarea"))
-    imports.push('import { Textarea } from "@/components/ui/textarea"')
-  if (types.has("checkbox") || types.has("checkbox-group"))
-    imports.push('import { Checkbox } from "@/components/ui/checkbox"')
-  if (types.has("switch"))
-    imports.push('import { Switch } from "@/components/ui/switch"')
-  if (types.has("select"))
-    imports.push(
-      'import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"'
-    )
-  if (types.has("radio-group"))
-    imports.push(
-      'import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"'
-    )
-  if (types.has("slider"))
-    imports.push('import { Slider } from "@/components/ui/slider"')
-  if (types.has("combobox")) {
-    const comboFields = fields.filter(
-      (f): f is ComboboxField => f.type === "combobox"
-    )
-    const parts = new Set<string>([
-      "Combobox",
-      "ComboboxContent",
-      "ComboboxEmpty",
-      "ComboboxList",
-      "ComboboxItem",
-    ])
-    for (const f of comboFields) {
-      if (f.multiple && f.displayStyle === "input") {
-        parts.add("ComboboxChips")
-        parts.add("ComboboxChip")
-        parts.add("ComboboxChipsInput")
-        parts.add("ComboboxValue")
-        if (f.clearable) parts.add("ComboboxClear")
-      } else {
-        parts.add("ComboboxInput")
-      }
-      if (f.displayStyle === "trigger") parts.add("ComboboxTrigger")
-    }
-    const ordered = [
-      "Combobox",
-      "ComboboxChip",
-      "ComboboxChips",
-      "ComboboxChipsInput",
-      "ComboboxClear",
-      "ComboboxContent",
-      "ComboboxEmpty",
-      "ComboboxInput",
-      "ComboboxItem",
-      "ComboboxList",
-      "ComboboxTrigger",
-      "ComboboxValue",
-    ].filter((p) => parts.has(p))
-    imports.push(
-      `import { ${ordered.join(", ")} } from "@/components/ui/combobox"`
-    )
-  }
-
-  return imports.join("\n")
-}
-
-export function generateFormCode(
+/** Generates a React Hook Form + Zod form component. */
+function generateReactHookFormCode(
   formName: string,
   submitLabel: string,
   fields: FormField[]
@@ -529,48 +369,25 @@ export function generateFormCode(
   const pascal = toPascalCase(formName) || "My"
   const camel = pascal.charAt(0).toLowerCase() + pascal.slice(1)
 
-  if (fields.length === 0) {
-    return `// Add fields to your form to generate code.`
-  }
-
-  const optionFields = fields.filter(
-    (f): f is SelectField | RadioGroupField | CheckboxGroupField | ComboboxField =>
-      f.type === "select" ||
-      f.type === "radio-group" ||
-      f.type === "checkbox-group" ||
-      f.type === "combobox"
-  )
-
-  const optionsSection =
-    optionFields.length > 0
-      ? optionFields.map(generateOptionsConst).join("\n\n") + "\n\n"
-      : ""
-
-  const schemaFields = fields
-    .map((f) => `  ${f.name}: ${getZodType(f)},`)
-    .join("\n")
-
-  const defaultValues = fields
-    .map((f) => `      ${f.name}: ${getDefaultValue(f)},`)
-    .join("\n")
+  const imports = buildImports(fields, [
+    'import { useForm, Controller } from "react-hook-form"',
+    'import { zodResolver } from "@hookform/resolvers/zod"',
+    'import { z } from "zod"',
+  ])
 
   const fieldJSX = fields
     .map((f) => indent(generateFieldJSX(f), 8))
     .join("\n\n")
 
-  return `${getRequiredImports(fields)}
+  return `${imports}
 
-${optionsSection}const ${camel}FormSchema = z.object({
-${schemaFields}
-})
-
-type ${pascal}FormValues = z.infer<typeof ${camel}FormSchema>
+${buildOptionsSection(fields)}${buildSchemaBlock(camel, pascal, fields)}
 
 export function ${pascal}Form() {
   const form = useForm<${pascal}FormValues>({
     resolver: zodResolver(${camel}FormSchema),
     defaultValues: {
-${defaultValues}
+${buildDefaultValueLines(fields)}
     },
   })
 
@@ -588,4 +405,26 @@ ${fieldJSX}
   )
 }
 `
+}
+
+/**
+ * Generates the form component source for the given fields and selected form
+ * library. Dispatches to the per-library generator; both share the Zod schema,
+ * options constants, and shadcn imports via codegen-shared.ts.
+ */
+export function generateFormCode(
+  formName: string,
+  submitLabel: string,
+  fields: FormField[],
+  formLibrary: FormLibrary = "react-hook-form"
+): string {
+  if (fields.length === 0) {
+    return `// Add fields to your form to generate code.`
+  }
+
+  if (formLibrary === "tanstack-form") {
+    return generateTanstackFormCode(formName, submitLabel, fields)
+  }
+
+  return generateReactHookFormCode(formName, submitLabel, fields)
 }

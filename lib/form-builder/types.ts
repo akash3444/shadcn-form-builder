@@ -1,3 +1,6 @@
+/** Form libraries the builder can emit code and render the live preview for. */
+export type FormLibrary = "react-hook-form" | "tanstack-form"
+
 export type FieldType =
   | "input"
   | "textarea"

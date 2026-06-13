@@ -14,7 +14,7 @@ export function CopyButton({ code, ...props }: CopyButtonProps) {
 
   return (
     <Button
-      variant="ghost"
+      variant="secondary"
       size="sm"
       onClick={() => copyToClipboard(code)}
       {...props}
