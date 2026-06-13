@@ -32,15 +32,13 @@ import { PresetsPanel } from "./presets-panel"
 import { Button } from "../ui/button"
 
 export function FieldEditor() {
-  const {
-    formName,
-    submitLabel,
-    fields,
-    selectedFieldId,
-    setFormName,
-    setSubmitLabel,
-    reorderFields,
-  } = useFormBuilderStore()
+  const formName = useFormBuilderStore((s) => s.formName)
+  const submitLabel = useFormBuilderStore((s) => s.submitLabel)
+  const fields = useFormBuilderStore((s) => s.fields)
+  const selectedFieldId = useFormBuilderStore((s) => s.selectedFieldId)
+  const setFormName = useFormBuilderStore((s) => s.setFormName)
+  const setSubmitLabel = useFormBuilderStore((s) => s.setSubmitLabel)
+  const reorderFields = useFormBuilderStore((s) => s.reorderFields)
 
   const [activeTab, setActiveTab] = useState<string>(() =>
     fields.length === 0 ? "presets" : "fields"

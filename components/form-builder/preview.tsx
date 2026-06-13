@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { generateFormCode } from "@/lib/form-builder/code-generator"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
@@ -8,8 +9,13 @@ import { CopyButton } from "./copy-button"
 import { PreviewForm } from "./preview-form"
 
 export function FormPreview() {
-  const { formName, submitLabel, fields } = useFormBuilderStore()
-  const code = generateFormCode(formName, submitLabel, fields)
+  const formName = useFormBuilderStore((s) => s.formName)
+  const submitLabel = useFormBuilderStore((s) => s.submitLabel)
+  const fields = useFormBuilderStore((s) => s.fields)
+  const code = useMemo(
+    () => generateFormCode(formName, submitLabel, fields),
+    [formName, submitLabel, fields]
+  )
 
   return (
     <Tabs

@@ -2,7 +2,21 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { codeToHtml } from "shiki"
+import type { Highlighter } from "shiki"
+
+const THEMES = ["github-dark-default", "github-light"] as const
+
+// Load Shiki lazily (keeps it out of the initial bundle) and create a single
+// highlighter with only the language and themes we use, reused across renders.
+let highlighterPromise: Promise<Highlighter> | null = null
+function getHighlighter() {
+  if (!highlighterPromise) {
+    highlighterPromise = import("shiki").then((shiki) =>
+      shiki.createHighlighter({ langs: ["tsx"], themes: [...THEMES] })
+    )
+  }
+  return highlighterPromise
+}
 
 interface CodeBlockProps {
   code: string
@@ -18,8 +32,9 @@ export function CodeBlock({ code }: CodeBlockProps) {
     const theme =
       resolvedTheme === "dark" ? "github-dark-default" : "github-light"
 
-    codeToHtml(code, { lang: "tsx", theme }).then((result) => {
-      if (!cancelled) setHtml(result)
+    getHighlighter().then((highlighter) => {
+      if (cancelled) return
+      setHtml(highlighter.codeToHtml(code, { lang: "tsx", theme }))
     })
 
     return () => {
@@ -35,6 +50,10 @@ export function CodeBlock({ code }: CodeBlockProps) {
     )
   }
 
+  // Safe: `html` is produced solely by Shiki from `code`, which is generated
+  // by our own code-generator. Shiki HTML-escapes every token's text content,
+  // and any user-supplied strings (labels, placeholders) are already escaped by
+  // the generator before reaching it — so no user input can inject live markup.
   return (
     <div
       className="[&_pre]:bg-transparent! [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[13px] [&_pre]:leading-[1.7] [&_pre]:[font-variant-ligatures:none]"

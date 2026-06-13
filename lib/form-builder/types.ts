@@ -108,3 +108,10 @@ export type FormField =
   | CheckboxGroupField
   | SliderField
   | ComboboxField
+
+/** Field types that carry a user-editable list of options. */
+export type OptionField =
+  | SelectField
+  | RadioGroupField
+  | CheckboxGroupField
+  | ComboboxField

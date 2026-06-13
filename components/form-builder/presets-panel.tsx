@@ -21,11 +21,12 @@ interface PresetsPanelProps {
 }
 
 export function PresetsPanel({ onLoad }: PresetsPanelProps) {
-  const { fields, loadPreset } = useFormBuilderStore()
+  const loadPreset = useFormBuilderStore((s) => s.loadPreset)
+  const hasFields = useFormBuilderStore((s) => s.fields.length > 0)
   const [pendingPreset, setPendingPreset] = useState<FormPreset | null>(null)
 
   function handleCardClick(preset: FormPreset) {
-    if (fields.length > 0) {
+    if (hasFields) {
       setPendingPreset(preset)
     } else {
       loadPreset(preset)
@@ -48,6 +49,7 @@ export function PresetsPanel({ onLoad }: PresetsPanelProps) {
           return (
             <button
               key={preset.id}
+              type="button"
               onClick={() => handleCardClick(preset)}
               className={cn(
                 "flex flex-col gap-3 rounded-lg border bg-background p-3 text-left transition-colors",

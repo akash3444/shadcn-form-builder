@@ -80,58 +80,55 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
         isSelected && "border-ring/70"
       )}
     >
-      {/* Row header */}
-      <div
-        className="flex items-center gap-2 px-3 py-2.5"
-        onClick={() => selectField(isSelected ? null : field.id)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            selectField(isSelected ? null : field.id)
-          }
-        }}
-      >
+      {/* Row header: three sibling interactive zones (drag / toggle / remove)
+          — no nested interactive elements. */}
+      <div className="flex items-center gap-2 px-3 py-2.5">
         {/* Drag handle */}
         <button
+          type="button"
           className="shrink-0 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
           {...attributes}
           {...listeners}
-          onClick={(e) => e.stopPropagation()}
           aria-label="Drag to reorder"
         >
           <GripVerticalIcon className="size-4" />
         </button>
 
-        {/* Type icon */}
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="size-4 text-muted-foreground" />
-        </div>
-
-        {/* Label + type badge */}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
-            {field.label || "Untitled"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {FIELD_LABELS[field.type]}
-            {field.required && <span className="ml-1 text-destructive">*</span>}
-          </p>
-        </div>
+        {/* Type icon + label — toggles the inline config panel */}
+        <button
+          type="button"
+          onClick={() => selectField(isSelected ? null : field.id)}
+          aria-expanded={isSelected}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <Icon className="size-4 text-muted-foreground" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">
+              {field.label || "Untitled"}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {FIELD_LABELS[field.type]}
+              {field.required && (
+                <span className="ml-1 text-destructive">*</span>
+              )}
+            </span>
+          </span>
+        </button>
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-1">
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              removeField(field.id)
-            }}
+            type="button"
+            onClick={() => removeField(field.id)}
             className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
             aria-label="Remove field"
           >
             <Trash2Icon className="size-3.5" />
           </button>
           <ChevronDownIcon
+            aria-hidden="true"
             className={cn(
               "size-4 text-muted-foreground transition-transform",
               isSelected && "rotate-180"
@@ -143,7 +140,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
       {/* Inline config panel */}
       {isSelected && (
         <div className="border-t">
-          <FieldConfig field={field} />
+          <FieldConfig key={field.id} field={field} />
         </div>
       )}
     </div>

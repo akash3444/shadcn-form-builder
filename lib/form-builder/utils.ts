@@ -1,3 +1,36 @@
+import type { FormField, OptionField } from "./types"
+
+/** True for field types that carry a user-editable list of options. */
+export function isOptionField(field: FormField): field is OptionField {
+  return (
+    field.type === "select" ||
+    field.type === "radio-group" ||
+    field.type === "checkbox-group" ||
+    field.type === "combobox"
+  )
+}
+
+/**
+ * Prunes a configured default value down to the values that still exist in an
+ * option set. A multi-value default keeps only the still-valid entries (and is
+ * dropped entirely if none remain); a single-value default is dropped if its
+ * value is gone. Used after options are renamed or removed so the default never
+ * references a value that no longer exists.
+ */
+export function pruneDefault(
+  defaultValue: OptionField["defaultValue"],
+  validValues: Set<string>
+): OptionField["defaultValue"] {
+  if (Array.isArray(defaultValue)) {
+    const filtered = defaultValue.filter((v) => validValues.has(v))
+    return filtered.length ? filtered : undefined
+  }
+  if (typeof defaultValue === "string" && !validValues.has(defaultValue)) {
+    return undefined
+  }
+  return defaultValue
+}
+
 /** "First Name" → "firstName" */
 export function labelToKey(label: string): string {
   const words = label

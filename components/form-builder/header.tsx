@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/tooltip"
 
 export function BuilderHeader() {
-  const { clearForm, fields } = useFormBuilderStore()
+  const clearForm = useFormBuilderStore((s) => s.clearForm)
+  const hasFields = useFormBuilderStore((s) => s.fields.length > 0)
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
@@ -26,7 +27,7 @@ export function BuilderHeader() {
         </div>
       </div>
 
-      {fields.length > 0 && (
+      {hasFields && (
         <Tooltip>
           <TooltipTrigger
             render={<Button variant="destructive" onClick={clearForm} />}
