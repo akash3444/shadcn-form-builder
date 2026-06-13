@@ -7,6 +7,7 @@ import type {
   RadioGroupField,
   CheckboxGroupField,
   SliderField,
+  ComboboxField,
 } from '../lib/form-builder/types'
 
 const base = {
@@ -101,5 +102,22 @@ export const makeSlider = (o: Partial<SliderField> = {}): SliderField => ({
   max: 100,
   step: 1,
   defaultValue: 50,
+  ...o,
+})
+
+export const makeCombobox = (o: Partial<ComboboxField> = {}): ComboboxField => ({
+  ...base,
+  type: 'combobox',
+  label: 'Framework',
+  name: 'framework',
+  multiple: false,
+  displayStyle: 'input',
+  searchPlaceholder: 'Search...',
+  emptyText: 'No results found.',
+  clearable: false,
+  options: [
+    { id: 'opt-1', label: 'React', value: 'react' },
+    { id: 'opt-2', label: 'Vue', value: 'vue' },
+  ],
   ...o,
 })

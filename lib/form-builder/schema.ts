@@ -79,6 +79,17 @@ export function buildSchema(fields: FormField[]) {
           ? z.array(z.string()).min(1, "Select at least one option")
           : z.array(z.string()).default([])
         break
+      case "combobox":
+        if (field.multiple) {
+          shape[field.name] = field.required
+            ? z.array(z.string()).min(1, "Select at least one option")
+            : z.array(z.string()).default([])
+        } else {
+          shape[field.name] = field.required
+            ? z.string().min(1, "Please select an option")
+            : z.string()
+        }
+        break
       case "slider": {
         const f = field as SliderField
         shape[field.name] = z.number().min(f.min).max(f.max)
@@ -115,6 +126,9 @@ export function buildDefaultValues(fields: FormField[]): Record<string, unknown>
         break
       case "checkbox-group":
         defaults[field.name] = []
+        break
+      case "combobox":
+        defaults[field.name] = field.multiple ? [] : ""
         break
       case "slider": {
         const f = field as SliderField
