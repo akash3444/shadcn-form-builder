@@ -40,7 +40,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const ORIENTATION_OPTIONS = [
@@ -693,9 +692,8 @@ export function FieldConfig({ field }: FieldConfigProps) {
                       const raw = Number(e.target.value)
                       const v =
                         e.target.value === "" || isNaN(raw) ? undefined : raw
-                      showNumberValidation
-                        ? patchNumVal({ min: v })
-                        : patchStrVal({ minLength: v })
+                      if (showNumberValidation) patchNumVal({ min: v })
+                      else patchStrVal({ minLength: v })
                     }}
                     className="h-7 text-xs"
                   />
@@ -717,9 +715,8 @@ export function FieldConfig({ field }: FieldConfigProps) {
                       const raw = Number(e.target.value)
                       const v =
                         e.target.value === "" || isNaN(raw) ? undefined : raw
-                      showNumberValidation
-                        ? patchNumVal({ max: v })
-                        : patchStrVal({ maxLength: v })
+                      if (showNumberValidation) patchNumVal({ max: v })
+                      else patchStrVal({ maxLength: v })
                     }}
                     className="h-7 text-xs"
                   />
