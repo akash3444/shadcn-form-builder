@@ -27,7 +27,7 @@ type Op =
   | { op: "isTrue"; message: string } // boolean must be true
   | { op: "refineOptionalMin"; value: number; message: string } // optional string min length
 
-type Tail = "none" | "optional" | "defaultFalse" | "defaultArray"
+type Tail = "none" | "optional"
 
 export interface SchemaSpec {
   base: Base
@@ -74,7 +74,7 @@ function arraySpec(required: boolean): SchemaSpec {
         ops: [{ op: "min", value: 1, message: "Select at least one option" }],
         tail: "none",
       }
-    : { base: { kind: "array" }, ops: [], tail: "defaultArray" }
+    : { base: { kind: "array" }, ops: [], tail: "none" }
 }
 
 /** Reduces a field to its serializable validation spec. */
@@ -113,7 +113,7 @@ export function fieldSchemaSpec(field: FormField): SchemaSpec {
             ops: [{ op: "isTrue", message: "This field is required" }],
             tail: "none",
           }
-        : { base: { kind: "boolean" }, ops: [], tail: "defaultFalse" }
+        : { base: { kind: "boolean" }, ops: [], tail: "none" }
     case "select":
     case "radio-group":
       return {
@@ -206,12 +206,6 @@ export function applySpec(spec: SchemaSpec): z.ZodTypeAny {
     case "optional":
       s = s.optional()
       break
-    case "defaultFalse":
-      s = s.default(false)
-      break
-    case "defaultArray":
-      s = s.default([])
-      break
     case "none":
       break
   }
@@ -261,12 +255,6 @@ export function serializeSpec(spec: SchemaSpec): string {
   switch (spec.tail) {
     case "optional":
       str += ".optional()"
-      break
-    case "defaultFalse":
-      str += ".default(false)"
-      break
-    case "defaultArray":
-      str += ".default([])"
       break
     case "none":
       break
