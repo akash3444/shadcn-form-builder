@@ -100,11 +100,6 @@ describe('addField', () => {
     expect(useFormBuilderStore.getState().fields[0].required).toBe(false)
   })
 
-  it('creates fields with disabled=false by default', () => {
-    useFormBuilderStore.getState().addField('input')
-    expect(useFormBuilderStore.getState().fields[0].disabled).toBe(false)
-  })
-
   it('creates input field with default inputType of "text"', () => {
     useFormBuilderStore.getState().addField('input')
     const field = useFormBuilderStore.getState().fields[0]

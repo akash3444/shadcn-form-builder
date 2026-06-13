@@ -19,7 +19,6 @@ const makeInput = (overrides: Partial<InputField> = {}): InputField => ({
   description: '',
   descriptionPosition: 'below-control' as const,
   required: false,
-  disabled: false,
   inputType: 'text',
   ...overrides,
 })
@@ -33,7 +32,6 @@ const makeTextarea = (overrides: Partial<TextareaField> = {}): TextareaField => 
   description: '',
   descriptionPosition: 'below-control' as const,
   required: false,
-  disabled: false,
   rows: 3,
   ...overrides,
 })
@@ -47,7 +45,6 @@ const makeCheckbox = (overrides: Partial<CheckboxField> = {}): CheckboxField => 
   description: '',
   descriptionPosition: 'below-control' as const,
   required: false,
-  disabled: false,
   ...overrides,
 })
 
@@ -60,7 +57,6 @@ const makeSwitch = (overrides: Partial<SwitchField> = {}): SwitchField => ({
   description: '',
   descriptionPosition: 'below-control' as const,
   required: false,
-  disabled: false,
   ...overrides,
 })
 
@@ -73,7 +69,6 @@ const makeSelect = (overrides: Partial<SelectField> = {}): SelectField => ({
   description: '',
   descriptionPosition: 'below-control' as const,
   required: false,
-  disabled: false,
   options: [
     { id: 'opt-1', label: 'USA', value: 'usa' },
     { id: 'opt-2', label: 'UK', value: 'uk' },
@@ -91,7 +86,6 @@ const makeRadioGroup = (overrides: Partial<RadioGroupField> = {}): RadioGroupFie
   descriptionPosition: 'below-control' as const,
   orientation: 'vertical' as const,
   required: false,
-  disabled: false,
   options: [
     { id: 'opt-1', label: 'Male', value: 'male' },
     { id: 'opt-2', label: 'Female', value: 'female' },
@@ -111,7 +105,6 @@ const makeCheckboxGroup = (
   descriptionPosition: 'below-control' as const,
   orientation: 'vertical' as const,
   required: false,
-  disabled: false,
   options: [
     { id: 'opt-1', label: 'Sports', value: 'sports' },
     { id: 'opt-2', label: 'Music', value: 'music' },
@@ -222,11 +215,6 @@ describe('generateFormCode — input field', () => {
     expect(code).not.toContain('<FieldDescription>')
   })
 
-  it('renders disabled={true} in JSX when the field is disabled', () => {
-    const code = generateFormCode('My Form', 'Submit', [makeInput({ disabled: true })])
-    expect(code).toContain('disabled={true}')
-  })
-
   it('includes required asterisk span when required', () => {
     const code = generateFormCode('My Form', 'Submit', [makeInput({ required: true })])
     expect(code).toContain('text-destructive')
@@ -297,13 +285,6 @@ describe('generateFormCode — select field', () => {
     expect(code).toContain('{ label: "USA", value: "usa" }')
     expect(code).toContain('{ label: "UK", value: "uk" }')
     expect(code).toContain('<SelectItem key={o.value} value={o.value}>')
-  })
-
-  // TDD: select fields have a disabled prop like all other field types.
-  // Without this test the missing disabled prop in the select template goes unnoticed.
-  it('renders disabled={true} in JSX when the select field is disabled', () => {
-    const code = generateFormCode('My Form', 'Submit', [makeSelect({ disabled: true })])
-    expect(code).toContain('disabled={true}')
   })
 })
 

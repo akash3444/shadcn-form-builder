@@ -34,6 +34,7 @@ import * as SwitchMod from "@/components/ui/switch"
 import * as SelectMod from "@/components/ui/select"
 import * as RadioGroupMod from "@/components/ui/radio-group"
 import * as SliderMod from "@/components/ui/slider"
+import * as ComboboxMod from "@/components/ui/combobox"
 
 import { generateFormCode } from "@/lib/form-builder/code-generator"
 import type { FormField } from "@/lib/form-builder/types"
@@ -55,6 +56,7 @@ const MODULES: Record<string, unknown> = {
   "@/components/ui/select": SelectMod,
   "@/components/ui/radio-group": RadioGroupMod,
   "@/components/ui/slider": SliderMod,
+  "@/components/ui/combobox": ComboboxMod,
 }
 
 let babelPromise: Promise<typeof import("@babel/standalone")> | null = null

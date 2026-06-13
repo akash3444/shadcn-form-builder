@@ -14,6 +14,7 @@ import {
   CircleDot,
   ListChecks,
   SlidersHorizontal,
+  TextSearch,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { FormField, FieldType } from "@/lib/form-builder/types"
@@ -30,6 +31,7 @@ const FIELD_ICONS: Record<FieldType, LucideIcon> = {
   "radio-group": CircleDot,
   "checkbox-group": ListChecks,
   slider: SlidersHorizontal,
+  combobox: TextSearch,
 }
 
 const FIELD_LABELS: Record<FieldType, string> = {
@@ -41,6 +43,7 @@ const FIELD_LABELS: Record<FieldType, string> = {
   "radio-group": "Radio Group",
   "checkbox-group": "Checkbox Group",
   slider: "Slider",
+  combobox: "Combobox",
 }
 
 interface FieldItemProps {

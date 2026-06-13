@@ -22,12 +22,13 @@ import type {
   InputType,
   GroupOrientation,
   DescriptionPosition,
+  ComboboxDisplayStyle,
   NumberValidation,
   StringValidation,
 } from "@/lib/form-builder/types"
 import { cn } from "@/lib/utils"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
-import { labelToKey } from "@/lib/form-builder/utils"
+import { labelToKey, coerceComboboxDefault } from "@/lib/form-builder/utils"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
@@ -397,8 +398,10 @@ export function FieldConfig({ field }: FieldConfigProps) {
             </div>
           )}
 
-          {/* Select / RadioGroup: single option picker */}
-          {(field.type === "select" || field.type === "radio-group") && (
+          {/* Select / RadioGroup / single Combobox: single option picker */}
+          {(field.type === "select" ||
+            field.type === "radio-group" ||
+            (field.type === "combobox" && !field.multiple)) && (
             <Select
               value={(field.defaultValue as string | undefined) ?? ""}
               onValueChange={(v) =>
@@ -422,8 +425,9 @@ export function FieldConfig({ field }: FieldConfigProps) {
             </Select>
           )}
 
-          {/* CheckboxGroup: multi-select */}
-          {field.type === "checkbox-group" && (
+          {/* CheckboxGroup / multiple Combobox: multi-select */}
+          {(field.type === "checkbox-group" ||
+            (field.type === "combobox" && field.multiple)) && (
             <MultiSelectCombobox
               options={field.options}
               value={(field.defaultValue as string[] | undefined) ?? []}
@@ -477,20 +481,15 @@ export function FieldConfig({ field }: FieldConfigProps) {
         </div>
       )}
 
-      <div className="space-y-2.5">
-        {field.type !== "slider" && (
+      {field.type !== "slider" && (
+        <div className="space-y-2.5">
           <SwitchRow
             label="Required"
             checked={field.required}
             onChange={(v) => updateField(field.id, { required: v })}
           />
-        )}
-        <SwitchRow
-          label="Disabled"
-          checked={field.disabled}
-          onChange={(v) => updateField(field.id, { disabled: v })}
-        />
-      </div>
+        </div>
+      )}
 
       {/* Textarea-specific: rows */}
       {field.type === "textarea" && (
@@ -534,6 +533,74 @@ export function FieldConfig({ field }: FieldConfigProps) {
             </SelectContent>
           </Select>
         </LabeledRow>
+      )}
+
+      {/* Combobox: behavior + text */}
+      {field.type === "combobox" && (
+        <div className="space-y-2.5">
+          <SwitchRow
+            label="Multiple"
+            checked={field.multiple}
+            onChange={(v) => {
+              // Toggling mode flips the value shape (string <-> string[]).
+              // Coerce the configured default so it never holds the wrong shape.
+              updateField(field.id, {
+                multiple: v,
+                defaultValue: coerceComboboxDefault(field.defaultValue, v),
+              })
+            }}
+          />
+
+          <LabeledRow label="Style">
+            <Tabs
+              value={field.displayStyle}
+              onValueChange={(v) =>
+                updateField(field.id, {
+                  displayStyle: v as ComboboxDisplayStyle,
+                })
+              }
+            >
+              <TabsList className="h-7 w-full">
+                <TabsTrigger value="input" className="text-[13px]">
+                  Input
+                </TabsTrigger>
+                <TabsTrigger value="trigger" className="text-[13px]">
+                  Trigger
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </LabeledRow>
+
+          <SwitchRow
+            label="Clearable"
+            checked={field.clearable}
+            onChange={(v) => updateField(field.id, { clearable: v })}
+          />
+
+          {field.displayStyle === "trigger" && (
+            <LabeledRow label="Search text" htmlFor={`search-${field.id}`}>
+              <Input
+                id={`search-${field.id}`}
+                value={field.searchPlaceholder}
+                onChange={(e) =>
+                  updateField(field.id, { searchPlaceholder: e.target.value })
+                }
+                placeholder="Search..."
+              />
+            </LabeledRow>
+          )}
+
+          <LabeledRow label="Empty text" htmlFor={`empty-${field.id}`}>
+            <Input
+              id={`empty-${field.id}`}
+              value={field.emptyText}
+              onChange={(e) =>
+                updateField(field.id, { emptyText: e.target.value })
+              }
+              placeholder="No results found."
+            />
+          </LabeledRow>
+        </div>
       )}
 
       {/* Slider: min / max / step */}
@@ -670,10 +737,11 @@ export function FieldConfig({ field }: FieldConfigProps) {
         </div>
       )}
 
-      {/* Select / RadioGroup / CheckboxGroup: options editor */}
+      {/* Select / RadioGroup / CheckboxGroup / Combobox: options editor */}
       {(field.type === "select" ||
         field.type === "radio-group" ||
-        field.type === "checkbox-group") && (
+        field.type === "checkbox-group" ||
+        field.type === "combobox") && (
         <div className="space-y-2">
           <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             Options

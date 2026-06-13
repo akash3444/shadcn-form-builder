@@ -38,6 +38,7 @@ const defaultFieldNames: Record<FieldType, string> = {
   "radio-group": "Radio Group",
   "checkbox-group": "Checkbox Group",
   slider: "Slider",
+  combobox: "Combobox",
 }
 
 function createDefaultField(type: FieldType): FormField {
@@ -50,7 +51,6 @@ function createDefaultField(type: FieldType): FormField {
     description: "",
     descriptionPosition: "below-control" as const,
     required: false,
-    disabled: false,
   }
 
   const defaultOptions: FieldOption[] = [
@@ -75,6 +75,18 @@ function createDefaultField(type: FieldType): FormField {
       return { ...base, type: "checkbox-group", options: defaultOptions, orientation: "vertical" }
     case "slider":
       return { ...base, type: "slider", min: 0, max: 100, step: 1, defaultValue: 50 }
+    case "combobox":
+      return {
+        ...base,
+        type: "combobox",
+        placeholder: "Select an option",
+        options: defaultOptions,
+        multiple: false,
+        displayStyle: "input",
+        searchPlaceholder: "Search...",
+        emptyText: "No results found.",
+        clearable: false,
+      }
   }
 }
 
@@ -145,7 +157,10 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
           fields: state.fields.map((f) => {
             if (
               f.id !== fieldId ||
-              (f.type !== "select" && f.type !== "radio-group" && f.type !== "checkbox-group")
+              (f.type !== "select" &&
+                f.type !== "radio-group" &&
+                f.type !== "checkbox-group" &&
+                f.type !== "combobox")
             )
               return f
             const existingValues = new Set(f.options.map((o) => o.value))
@@ -170,7 +185,10 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
           fields: state.fields.map((f) => {
             if (
               f.id !== fieldId ||
-              (f.type !== "select" && f.type !== "radio-group" && f.type !== "checkbox-group")
+              (f.type !== "select" &&
+                f.type !== "radio-group" &&
+                f.type !== "checkbox-group" &&
+                f.type !== "combobox")
             )
               return f
             const updatedOptions = f.options.map((o) =>
@@ -182,7 +200,7 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
               if (oldValue !== undefined && oldValue !== updates.value) {
                 const newValidValues = new Set(updatedOptions.map((o) => o.value))
                 let defaultValue: typeof f.defaultValue = f.defaultValue
-                if (f.type === "checkbox-group" && Array.isArray(defaultValue)) {
+                if (Array.isArray(defaultValue)) {
                   const filtered = defaultValue.filter((v) => newValidValues.has(v))
                   defaultValue = filtered.length ? filtered : undefined
                 } else if (typeof defaultValue === "string" && !newValidValues.has(defaultValue)) {
@@ -200,7 +218,10 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
           fields: state.fields.map((f) => {
             if (
               f.id !== fieldId ||
-              (f.type !== "select" && f.type !== "radio-group" && f.type !== "checkbox-group")
+              (f.type !== "select" &&
+                f.type !== "radio-group" &&
+                f.type !== "checkbox-group" &&
+                f.type !== "combobox")
             )
               return f
             const remainingOptions = f.options.filter((o) => o.id !== optionId)
@@ -208,7 +229,7 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
             let defaultValue: typeof f.defaultValue = f.defaultValue
             if (removedValue !== undefined) {
               const remainingValues = new Set(remainingOptions.map((o) => o.value))
-              if (f.type === "checkbox-group" && Array.isArray(defaultValue)) {
+              if (Array.isArray(defaultValue)) {
                 const filtered = defaultValue.filter((v) => remainingValues.has(v))
                 defaultValue = filtered.length ? filtered : undefined
               } else if (typeof defaultValue === "string" && defaultValue === removedValue) {

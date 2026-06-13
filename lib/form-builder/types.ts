@@ -7,6 +7,7 @@ export type FieldType =
   | "radio-group"
   | "checkbox-group"
   | "slider"
+  | "combobox"
 
 export type InputType = "text" | "email" | "password" | "url" | "tel" | "number"
 
@@ -24,7 +25,6 @@ interface BaseField {
   description: string
   descriptionPosition: DescriptionPosition
   required: boolean
-  disabled: boolean
   defaultValue?: string | number | boolean | string[]
 }
 
@@ -86,6 +86,18 @@ export interface SliderField extends BaseField {
   step: number
 }
 
+export type ComboboxDisplayStyle = "trigger" | "input"
+
+export interface ComboboxField extends BaseField {
+  type: "combobox"
+  options: FieldOption[]
+  multiple: boolean
+  displayStyle: ComboboxDisplayStyle
+  searchPlaceholder: string
+  emptyText: string
+  clearable: boolean
+}
+
 export type FormField =
   | InputField
   | TextareaField
@@ -95,3 +107,4 @@ export type FormField =
   | RadioGroupField
   | CheckboxGroupField
   | SliderField
+  | ComboboxField

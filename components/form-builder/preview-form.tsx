@@ -31,6 +31,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxClear,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+} from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -52,7 +66,6 @@ function FieldWrapper({
   descriptionPosition,
   error,
   htmlFor,
-  disabled,
   children,
 }: {
   label: string
@@ -61,11 +74,10 @@ function FieldWrapper({
   descriptionPosition: "above-control" | "below-control"
   error?: string
   htmlFor?: string
-  disabled?: boolean
   children: React.ReactNode
 }) {
   return (
-    <Field data-invalid={!!error} data-disabled={disabled}>
+    <Field data-invalid={!!error}>
       <FieldLabel htmlFor={htmlFor}>
         {label}
         {required && <span className="text-destructive">*</span>}
@@ -107,7 +119,14 @@ export function PreviewForm({
 
   // Reset form when fields change to avoid stale field state
   const fieldResetKey = JSON.stringify(
-    fields.map((f) => ({ name: f.name, defaultValue: f.defaultValue }))
+    fields.map((f) => ({
+      name: f.name,
+      defaultValue: f.defaultValue,
+      // The combobox value SHAPE depends on `multiple` (string vs string[]).
+      // Toggling it must re-init the form, or the control receives a stale
+      // value of the wrong shape.
+      multiple: f.type === "combobox" ? f.multiple : undefined,
+    }))
   )
   useEffect(() => {
     form.reset(buildDefaultValues(fields) as FormValues)
@@ -161,7 +180,6 @@ export function PreviewForm({
                     descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
-                    disabled={field.disabled}
                   >
                     <Controller
                       name={field.name}
@@ -171,7 +189,6 @@ export function PreviewForm({
                           id={field.name}
                           type={field.inputType}
                           placeholder={field.placeholder}
-                          disabled={field.disabled}
                           aria-invalid={fieldState.invalid}
                           value={f.value ?? ""}
                           onChange={
@@ -203,7 +220,6 @@ export function PreviewForm({
                     descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
-                    disabled={field.disabled}
                   >
                     <Controller
                       name={field.name}
@@ -213,7 +229,6 @@ export function PreviewForm({
                           id={field.name}
                           placeholder={field.placeholder}
                           rows={field.rows}
-                          disabled={field.disabled}
                           aria-invalid={fieldState.invalid}
                           className="resize-none"
                           value={f.value as string}
@@ -233,7 +248,6 @@ export function PreviewForm({
                     key={field.id}
                     orientation="horizontal"
                     data-invalid={!!error}
-                    data-disabled={field.disabled}
                   >
                     <Controller
                       name={field.name}
@@ -243,7 +257,6 @@ export function PreviewForm({
                           id={field.name}
                           checked={Boolean(f.value)}
                           onCheckedChange={f.onChange}
-                          disabled={field.disabled}
                           aria-invalid={!!error}
                         />
                       )}
@@ -269,7 +282,6 @@ export function PreviewForm({
                     key={field.id}
                     orientation="horizontal"
                     data-invalid={!!error}
-                    data-disabled={field.disabled}
                   >
                     <FieldContent>
                       <FieldLabel htmlFor={field.name}>
@@ -291,7 +303,6 @@ export function PreviewForm({
                           id={field.name}
                           checked={Boolean(f.value)}
                           onCheckedChange={f.onChange}
-                          disabled={field.disabled}
                         />
                       )}
                     />
@@ -308,7 +319,6 @@ export function PreviewForm({
                     descriptionPosition={field.descriptionPosition}
                     error={error}
                     htmlFor={field.name}
-                    disabled={field.disabled}
                   >
                     <Controller
                       name={field.name}
@@ -363,7 +373,6 @@ export function PreviewForm({
                         <RadioGroup
                           value={String(f.value ?? "")}
                           onValueChange={f.onChange}
-                          disabled={field.disabled}
                           className={cn(
                             "flex gap-3",
                             field.orientation === "horizontal"
@@ -441,7 +450,6 @@ export function PreviewForm({
                                       : current.filter((v) => v !== opt.value)
                                   )
                                 }}
-                                disabled={field.disabled}
                               />
                               <FieldLabel
                                 htmlFor={`${field.name}-${opt.value}`}
@@ -466,7 +474,6 @@ export function PreviewForm({
                   <Field
                     key={field.id}
                     data-invalid={!!error}
-                    data-disabled={field.disabled}
                   >
                     <Controller
                       name={field.name}
@@ -491,7 +498,6 @@ export function PreviewForm({
                             min={field.min}
                             max={field.max}
                             step={field.step}
-                            disabled={field.disabled}
                           />
                           {field.description &&
                             field.descriptionPosition === "below-control" && (
@@ -505,6 +511,192 @@ export function PreviewForm({
                     <FieldError>{error}</FieldError>
                   </Field>
                 )
+
+              case "combobox": {
+                const opts = field.options
+                const values = opts.map((o) => o.value)
+                const labelFor = (v: string) =>
+                  opts.find((o) => o.value === v)?.label ?? v
+                const placeholder =
+                  field.placeholder ||
+                  (field.multiple ? "Select options" : "Select an option")
+                const emptyText = field.emptyText || "No results found."
+                const searchPlaceholder = field.searchPlaceholder || "Search..."
+                const triggerClass =
+                  "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
+
+                return (
+                  <FieldWrapper
+                    key={field.id}
+                    label={field.label}
+                    required={field.required}
+                    description={field.description}
+                    descriptionPosition={field.descriptionPosition}
+                    error={error}
+                    htmlFor={field.name}
+                  >
+                    <Controller
+                      name={field.name}
+                      control={form.control}
+                      render={({ field: f, fieldState }) => {
+                        if (field.multiple) {
+                          const arr = Array.isArray(f.value)
+                            ? (f.value as string[])
+                            : []
+                          if (field.displayStyle === "input") {
+                            return (
+                              <Combobox
+                                multiple
+                                items={values}
+                                itemToStringLabel={labelFor}
+                                value={arr}
+                                onValueChange={f.onChange}
+                              >
+                                <ComboboxChips>
+                                  <ComboboxValue>
+                                    {(value: string[] | null) =>
+                                      (value ?? []).map((v) => (
+                                        <ComboboxChip key={v}>
+                                          {labelFor(v)}
+                                        </ComboboxChip>
+                                      ))
+                                    }
+                                  </ComboboxValue>
+                                  <ComboboxChipsInput
+                                    id={field.name}
+                                    placeholder={placeholder}
+                                  />
+                                  {field.clearable && <ComboboxClear />}
+                                </ComboboxChips>
+                                <ComboboxContent>
+                                  <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                  <ComboboxList>
+                                    {(v: string) => (
+                                      <ComboboxItem key={v} value={v}>
+                                        {labelFor(v)}
+                                      </ComboboxItem>
+                                    )}
+                                  </ComboboxList>
+                                </ComboboxContent>
+                              </Combobox>
+                            )
+                          }
+                          return (
+                            <Combobox
+                              multiple
+                              items={values}
+                              itemToStringLabel={labelFor}
+                              value={arr}
+                              onValueChange={f.onChange}
+                            >
+                              <ComboboxTrigger
+                                id={field.name}
+                                aria-invalid={fieldState.invalid}
+                                className={triggerClass}
+                              >
+                                <span className="truncate">
+                                  {arr.length > 0 ? (
+                                    `${arr.length} selected`
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      {placeholder}
+                                    </span>
+                                  )}
+                                </span>
+                              </ComboboxTrigger>
+                              <ComboboxContent>
+                                <ComboboxInput
+                                  showTrigger={false}
+                                  showClear={field.clearable}
+                                  placeholder={searchPlaceholder}
+                                />
+                                <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                <ComboboxList>
+                                  {(v: string) => (
+                                    <ComboboxItem key={v} value={v}>
+                                      {labelFor(v)}
+                                    </ComboboxItem>
+                                  )}
+                                </ComboboxList>
+                              </ComboboxContent>
+                            </Combobox>
+                          )
+                        }
+
+                        const single =
+                          typeof f.value === "string" ? f.value : ""
+                        if (field.displayStyle === "trigger") {
+                          return (
+                            <Combobox
+                              items={values}
+                              itemToStringLabel={labelFor}
+                              value={single || null}
+                              onValueChange={(v) => f.onChange(v ?? "")}
+                            >
+                              <ComboboxTrigger
+                                id={field.name}
+                                aria-invalid={fieldState.invalid}
+                                className={triggerClass}
+                              >
+                                <span className="truncate">
+                                  {single ? (
+                                    labelFor(single)
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      {placeholder}
+                                    </span>
+                                  )}
+                                </span>
+                              </ComboboxTrigger>
+                              <ComboboxContent>
+                                <ComboboxInput
+                                  showTrigger={false}
+                                  showClear={field.clearable}
+                                  placeholder={searchPlaceholder}
+                                />
+                                <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                <ComboboxList>
+                                  {(v: string) => (
+                                    <ComboboxItem key={v} value={v}>
+                                      {labelFor(v)}
+                                    </ComboboxItem>
+                                  )}
+                                </ComboboxList>
+                              </ComboboxContent>
+                            </Combobox>
+                          )
+                        }
+
+                        return (
+                          <Combobox
+                            items={values}
+                            itemToStringLabel={labelFor}
+                            value={single || null}
+                            onValueChange={(v) => f.onChange(v ?? "")}
+                          >
+                            <ComboboxInput
+                              id={field.name}
+                              placeholder={placeholder}
+                              showClear={field.clearable}
+                              aria-invalid={fieldState.invalid}
+                            />
+                            <ComboboxContent>
+                              <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                              <ComboboxList>
+                                {(v: string) => (
+                                  <ComboboxItem key={v} value={v}>
+                                    {labelFor(v)}
+                                  </ComboboxItem>
+                                )}
+                              </ComboboxList>
+                            </ComboboxContent>
+                          </Combobox>
+                        )
+                      }}
+                    />
+                  </FieldWrapper>
+                )
+              }
             }
           })}
         </FieldGroup>
