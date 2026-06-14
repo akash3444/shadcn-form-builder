@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { arrayMove } from "@dnd-kit/sortable"
-import type { FormField, FieldType, FieldOption } from "./types"
+import type { FormField, FieldType, FieldOption, FormLibrary } from "./types"
 import type { FormPreset } from "./presets"
 import {
   labelToKey,
@@ -16,11 +16,13 @@ interface FormBuilderState {
   submitLabel: string
   fields: FormField[]
   selectedFieldId: string | null
+  formLibrary: FormLibrary
 }
 
 interface FormBuilderActions {
   setFormName: (name: string) => void
   setSubmitLabel: (label: string) => void
+  setFormLibrary: (formLibrary: FormLibrary) => void
   addField: (type: FieldType) => void
   removeField: (id: string) => void
   updateField: (id: string, updates: Partial<FormField>) => void
@@ -101,6 +103,7 @@ const initialState: FormBuilderState = {
   submitLabel: "Submit",
   fields: [],
   selectedFieldId: null,
+  formLibrary: "react-hook-form",
 }
 
 export const useFormBuilderStore = create<FormBuilderStore>()(
@@ -110,6 +113,7 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
 
       setFormName: (formName) => set({ formName }),
       setSubmitLabel: (submitLabel) => set({ submitLabel }),
+      setFormLibrary: (formLibrary) => set({ formLibrary }),
 
       addField: (type) =>
         set((state) => {
@@ -217,7 +221,14 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
           }),
         })),
 
-      clearForm: () => set({ ...initialState, fields: [] }),
+      // Keep the chosen form library across a clear — it's an output
+      // preference, not form content.
+      clearForm: () =>
+        set((state) => ({
+          ...initialState,
+          fields: [],
+          formLibrary: state.formLibrary,
+        })),
 
       loadPreset: (preset) =>
         set({
