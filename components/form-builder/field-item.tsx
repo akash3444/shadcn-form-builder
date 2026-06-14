@@ -2,11 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import {
-  GripVerticalIcon,
-  Trash2Icon,
-  ChevronDownIcon,
-} from "lucide-react"
+import { GripVerticalIcon, Trash2Icon, ChevronDownIcon } from "lucide-react"
 import type { FormField } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { FieldConfig } from "./field-config"
