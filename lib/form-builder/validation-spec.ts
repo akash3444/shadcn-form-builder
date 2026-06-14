@@ -13,7 +13,7 @@ import type { FormField, NumberValidation, StringValidation } from "./types"
 
 type Base =
   | { kind: "string" }
-  | { kind: "number"; requiredError?: string }
+  | { kind: "number" }
   | { kind: "boolean" }
   | { kind: "array" } // array of strings
 
@@ -27,7 +27,13 @@ type Op =
   | { op: "isTrue"; message: string } // boolean must be true
   | { op: "refineOptionalMin"; value: number; message: string } // optional string min length
 
-type Tail = "none" | "optional"
+// "requiredNumber" models a required number input: its control clears to
+// `undefined` while editing, so the value's SHAPE is optional and a presence
+// refine enforces it on submit. This keeps the inferred type (`number |
+// undefined`) consistent with what the control actually holds — a plain
+// `z.number()` would infer `number`, which the number input can never guarantee
+// mid-edit and which makes the generated TanStack binding fail to type-check.
+type Tail = "none" | "optional" | "requiredNumber"
 
 export interface SchemaSpec {
   base: Base
@@ -89,12 +95,9 @@ export function fieldSchemaSpec(field: FormField): SchemaSpec {
         if (v.max !== undefined)
           ops.push({ op: "max", value: v.max, message: `Must be at most ${v.max}` })
         return {
-          base: {
-            kind: "number",
-            requiredError: field.required ? "This field is required" : undefined,
-          },
+          base: { kind: "number" },
           ops,
-          tail: field.required ? "none" : "optional",
+          tail: field.required ? "requiredNumber" : "optional",
         }
       }
       return stringSpec(
@@ -164,9 +167,7 @@ function baseLive(base: Base): z.ZodTypeAny {
     case "string":
       return z.string()
     case "number":
-      return base.requiredError
-        ? z.number({ required_error: base.requiredError })
-        : z.number()
+      return z.number()
     case "boolean":
       return z.boolean()
     case "array":
@@ -206,6 +207,11 @@ export function applySpec(spec: SchemaSpec): z.ZodTypeAny {
     case "optional":
       s = s.optional()
       break
+    case "requiredNumber":
+      s = s
+        .optional()
+        .refine((v: number | undefined) => v !== undefined, "This field is required")
+      break
     case "none":
       break
   }
@@ -217,9 +223,7 @@ function baseString(base: Base): string {
     case "string":
       return "z.string()"
     case "number":
-      return base.requiredError
-        ? `z.number({ required_error: "${base.requiredError}" })`
-        : "z.number()"
+      return "z.number()"
     case "boolean":
       return "z.boolean()"
     case "array":
@@ -255,6 +259,9 @@ export function serializeSpec(spec: SchemaSpec): string {
   switch (spec.tail) {
     case "optional":
       str += ".optional()"
+      break
+    case "requiredNumber":
+      str += `.optional().refine((v) => v !== undefined, "This field is required")`
       break
     case "none":
       break

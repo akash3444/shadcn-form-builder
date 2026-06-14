@@ -231,11 +231,16 @@ export function buildSchemaBlock(
   const schemaFields = fields
     .map((f) => `  ${f.name}: ${getZodType(f)},`)
     .join("\n")
+  // The form holds the schema's INPUT type (what the controls produce), which
+  // diverges from the output only when a field narrows on parse — e.g. a
+  // required number is `number | undefined` while editing but `number` after
+  // validation. For every non-narrowing field `z.input` equals `z.infer`, so
+  // this is identical to the inferred type everywhere except those cases.
   return `const ${camel}FormSchema = z.object({
 ${schemaFields}
 })
 
-type ${pascal}FormValues = z.infer<typeof ${camel}FormSchema>`
+type ${pascal}FormValues = z.input<typeof ${camel}FormSchema>`
 }
 
 /** The default-value object entries, indented for a `defaultValues: { ... }`. */
