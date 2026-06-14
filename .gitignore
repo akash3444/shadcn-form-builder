@@ -40,3 +40,4 @@ next-env.d.ts
 
 # Generated code dumped by typecheck:codegen --write
 .codegen-virtual/
+.env.local

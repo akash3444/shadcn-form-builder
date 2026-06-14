@@ -1,5 +1,6 @@
 "use client"
 
+import posthog from "posthog-js"
 import { Trash2Icon } from "lucide-react"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { Button } from "@/components/ui/button"
@@ -63,7 +64,13 @@ export function BuilderHeader() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={clearForm}>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={() => {
+                  posthog.capture("form_cleared")
+                  clearForm()
+                }}
+              >
                 Clear form
               </AlertDialogAction>
             </AlertDialogFooter>
