@@ -1,0 +1,311 @@
+import type {
+  CheckboxField,
+  CheckboxGroupField,
+  ComboboxField,
+  ComboboxDisplayStyle,
+  DescriptionPosition,
+  FieldOption,
+  FormField,
+  GroupOrientation,
+  InputField,
+  InputType,
+  NumberValidation,
+  RadioGroupField,
+  SelectField,
+  SliderField,
+  StringValidation,
+  SwitchField,
+  TextareaField,
+} from "../types"
+import { FORM_PRESETS } from "../presets"
+
+/**
+ * Field configurations fed to the codegen type-check harness
+ * (scripts/typecheck-codegen.ts). Each fixture is generated under every form
+ * library and compiled against the real `@/components/ui/*` types, so the matrix
+ * aims to drive every branch the generators can take.
+ *
+ * Coverage strategy: the generators build the Zod schema and the JSX
+ * independently, so we cross axes that change the SAME output (required × min ×
+ * max; multiple × displayStyle × clearable) but not two independent axes (a
+ * validation value against a description position tests nothing new). Anything
+ * that changes the inferred TS type — required/optional, scalar-vs-array,
+ * combobox `multiple`, and configured defaults — IS crossed with the binding
+ * layer, because that interaction is where the type errors hide.
+ */
+
+export interface CodegenFixture {
+  /** Stable, file-safe identifier used in harness output and `--write` names. */
+  name: string
+  formName: string
+  submitLabel: string
+  fields: FormField[]
+}
+
+let optionSeq = 0
+function opt(label: string, value: string): FieldOption {
+  return { id: `opt-${optionSeq++}`, label, value }
+}
+
+const baseDefaults = {
+  placeholder: "",
+  description: "",
+  descriptionPosition: "below-control" as const,
+  required: false,
+}
+
+function input(name: string, over: Partial<InputField> = {}): InputField {
+  return { id: name, type: "input", inputType: "text", label: name, name, ...baseDefaults, ...over }
+}
+function textarea(name: string, over: Partial<TextareaField> = {}): TextareaField {
+  return { id: name, type: "textarea", label: name, name, rows: 4, ...baseDefaults, ...over }
+}
+function checkbox(name: string, over: Partial<CheckboxField> = {}): CheckboxField {
+  return { id: name, type: "checkbox", label: name, name, ...baseDefaults, ...over }
+}
+function toggle(name: string, over: Partial<SwitchField> = {}): SwitchField {
+  return { id: name, type: "switch", label: name, name, ...baseDefaults, ...over }
+}
+const sampleOptions = (): FieldOption[] => [
+  opt("One", "one"),
+  opt("Two", "two"),
+  opt("Three", "three"),
+]
+function select(name: string, over: Partial<SelectField> = {}): SelectField {
+  return { id: name, type: "select", label: name, name, options: sampleOptions(), ...baseDefaults, ...over }
+}
+function radioGroup(name: string, over: Partial<RadioGroupField> = {}): RadioGroupField {
+  return { id: name, type: "radio-group", label: name, name, options: sampleOptions(), orientation: "vertical", ...baseDefaults, ...over }
+}
+function checkboxGroup(name: string, over: Partial<CheckboxGroupField> = {}): CheckboxGroupField {
+  return { id: name, type: "checkbox-group", label: name, name, options: sampleOptions(), orientation: "vertical", ...baseDefaults, ...over }
+}
+function slider(name: string, over: Partial<SliderField> = {}): SliderField {
+  return { id: name, type: "slider", label: name, name, min: 0, max: 100, step: 1, ...baseDefaults, ...over }
+}
+function combobox(name: string, over: Partial<ComboboxField> = {}): ComboboxField {
+  return {
+    id: name,
+    type: "combobox",
+    label: name,
+    name,
+    options: sampleOptions(),
+    multiple: false,
+    displayStyle: "trigger",
+    searchPlaceholder: "",
+    emptyText: "",
+    clearable: false,
+    ...baseDefaults,
+    ...over,
+  }
+}
+
+// ---- Combination axes ------------------------------------------------------
+
+const REQ = [
+  { tag: "required", required: true },
+  { tag: "optional", required: false },
+] as const
+
+const STRING_VALIDATIONS: { tag: string; v: StringValidation }[] = [
+  { tag: "noval", v: {} },
+  { tag: "min", v: { minLength: 3 } },
+  { tag: "max", v: { maxLength: 20 } },
+  { tag: "minmax", v: { minLength: 3, maxLength: 20 } },
+]
+
+const NUMBER_VALIDATIONS: { tag: string; v: NumberValidation }[] = [
+  { tag: "noval", v: {} },
+  { tag: "min", v: { min: 1 } },
+  { tag: "max", v: { max: 10 } },
+  { tag: "minmax", v: { min: 1, max: 10 } },
+]
+
+const DESC: { tag: string; description: string; descriptionPosition: DescriptionPosition }[] = [
+  { tag: "above", description: "Helpful guidance text", descriptionPosition: "above-control" },
+  { tag: "below", description: "Helpful guidance text", descriptionPosition: "below-control" },
+]
+
+const ORIENTATIONS: GroupOrientation[] = ["vertical", "horizontal"]
+
+// ---- Fixture assembly ------------------------------------------------------
+
+const fixtures: CodegenFixture[] = []
+const one = (name: string, field: FormField, formName = name) =>
+  fixtures.push({ name, formName, submitLabel: "Save", fields: [field] })
+
+// Number inputs: required/optional × {none, min, max, min+max}, plus defaults.
+for (const r of REQ)
+  for (const val of NUMBER_VALIDATIONS)
+    one(`input-number-${r.tag}-${val.tag}`, input("value", { inputType: "number", required: r.required, validation: val.v }))
+one("input-number-required-default", input("value", { inputType: "number", required: true, defaultValue: 5 }))
+one("input-number-optional-default", input("value", { inputType: "number", required: false, defaultValue: 5 }))
+
+// Text inputs: required/optional × {none, min, max, min+max} (required+min and
+// optional+min take different schema paths), plus a configured default.
+for (const r of REQ)
+  for (const val of STRING_VALIDATIONS)
+    one(`input-text-${r.tag}-${val.tag}`, input("value", { inputType: "text", required: r.required, validation: val.v }))
+one("input-text-default", input("value", { defaultValue: "hello" }))
+
+// Email/URL: required/optional × {none, min+max} — confirms the type-specific
+// `.email()` / `.url()` op composes with required/optional and length checks.
+for (const t of ["email", "url"] as InputType[])
+  for (const r of REQ)
+    for (const val of [NUMBER_VALIDATIONS[0], STRING_VALIDATIONS[3]] as { tag: string; v: StringValidation }[])
+      one(`input-${t}-${r.tag}-${val.tag}`, input("value", { inputType: t, required: r.required, validation: val.v }))
+
+// Password/Tel: required/optional (string validation already covered by text).
+for (const t of ["password", "tel"] as InputType[])
+  for (const r of REQ)
+    one(`input-${t}-${r.tag}`, input("value", { inputType: t, required: r.required }))
+
+// Input description placement (the `descEl` + FieldDescription import path).
+for (const d of DESC)
+  one(`input-text-desc-${d.tag}`, input("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+
+// Textarea: distinct JSX branch; required/optional × validation, descriptions, default.
+for (const r of REQ)
+  for (const val of STRING_VALIDATIONS)
+    one(`textarea-${r.tag}-${val.tag}`, textarea("value", { required: r.required, validation: val.v }))
+for (const d of DESC)
+  one(`textarea-desc-${d.tag}`, textarea("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+one("textarea-default", textarea("value", { defaultValue: "prefilled" }))
+
+// Checkbox / switch: required/optional, boolean defaults, and the `descInner`
+// path (these two are the only fields that render a description that way).
+for (const r of REQ) {
+  one(`checkbox-${r.tag}`, checkbox("value", { required: r.required }))
+  one(`switch-${r.tag}`, toggle("value", { required: r.required }))
+}
+for (const def of [true, false]) {
+  one(`checkbox-default-${def}`, checkbox("value", { defaultValue: def }))
+  one(`switch-default-${def}`, toggle("value", { defaultValue: def }))
+}
+one("checkbox-desc", checkbox("value", { description: "I agree to the terms" }))
+one("switch-desc", toggle("value", { description: "Enable notifications" }))
+one("checkbox-required-desc", checkbox("value", { required: true, description: "Required consent" }))
+
+// Select: required/optional, default, description placement.
+for (const r of REQ) one(`select-${r.tag}`, select("value", { required: r.required }))
+one("select-default", select("value", { defaultValue: "two" }))
+for (const d of DESC)
+  one(`select-desc-${d.tag}`, select("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+
+// Radio group: required/optional × orientation, default, description.
+for (const r of REQ)
+  for (const o of ORIENTATIONS)
+    one(`radio-${r.tag}-${o}`, radioGroup("value", { required: r.required, orientation: o }))
+one("radio-default", radioGroup("value", { defaultValue: "two" }))
+for (const d of DESC)
+  one(`radio-desc-${d.tag}`, radioGroup("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+
+// Checkbox group (array base): required/optional × orientation, array default, description.
+for (const r of REQ)
+  for (const o of ORIENTATIONS)
+    one(`checkbox-group-${r.tag}-${o}`, checkboxGroup("value", { required: r.required, orientation: o }))
+one("checkbox-group-default", checkboxGroup("value", { defaultValue: ["one", "two"] }))
+for (const d of DESC)
+  one(`checkbox-group-desc-${d.tag}`, checkboxGroup("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+
+// Slider: range/step variations, default, description.
+one("slider-basic", slider("value", { min: 0, max: 100, step: 1 }))
+one("slider-custom-step", slider("value", { min: 0, max: 10, step: 0.5 }))
+one("slider-negative", slider("value", { min: -50, max: 50, step: 5 }))
+one("slider-default", slider("value", { min: 0, max: 100, step: 1, defaultValue: 25 }))
+for (const d of DESC)
+  one(`slider-desc-${d.tag}`, slider("value", { description: d.description, descriptionPosition: d.descriptionPosition }))
+
+// Combobox: multiple × displayStyle × clearable (the full output matrix), plus
+// required and default variants for both the scalar and array shapes.
+for (const multiple of [false, true])
+  for (const displayStyle of ["trigger", "input"] as ComboboxDisplayStyle[])
+    for (const clearable of [false, true])
+      one(
+        `combobox-${multiple ? "multiple" : "single"}-${displayStyle}${clearable ? "-clearable" : ""}`,
+        combobox("value", { multiple, displayStyle, clearable })
+      )
+one("combobox-single-required", combobox("value", { multiple: false, displayStyle: "trigger", required: true }))
+one("combobox-multiple-required", combobox("value", { multiple: true, displayStyle: "input", required: true }))
+one("combobox-single-default", combobox("value", { multiple: false, displayStyle: "trigger", defaultValue: "two" }))
+one("combobox-multiple-default", combobox("value", { multiple: true, displayStyle: "input", defaultValue: ["one", "two"] }))
+one("combobox-custom-text", combobox("value", { multiple: false, displayStyle: "input", searchPlaceholder: "Type to filter <fast>", emptyText: "Nothing & nada {0}" }))
+
+// Empty label → codegen falls back to "Field".
+one("empty-label", input("value", { label: "" }))
+
+// ---- Escaping: JSX-significant characters in every text-bearing slot --------
+
+fixtures.push({
+  name: "escaping-text",
+  formName: 'Escaping <Form> & "Co"',
+  submitLabel: 'Submit <now> & "go"',
+  fields: [
+    input("tricky", {
+      label: 'Name <with> {braces} & "quotes"',
+      placeholder: 'Type "here" <please>',
+      description: "Use a & b {c} <d>",
+    }),
+  ],
+})
+fixtures.push({
+  name: "escaping-multiline-placeholder",
+  formName: "Escaping Multiline",
+  submitLabel: "Save",
+  fields: [textarea("notes", { placeholder: "Line one\nLine two\nLine three" })],
+})
+fixtures.push({
+  name: "escaping-option-labels",
+  formName: "Escaping Options",
+  submitLabel: "Save",
+  fields: [
+    select("choice", {
+      required: true,
+      options: [opt('A & B <x>', "a-b"), opt('Quote "me"', "quote"), opt("Braces {x}", "braces")],
+    }),
+    combobox("multiTricky", {
+      multiple: true,
+      displayStyle: "input",
+      options: [opt('Tag <1> & "2"', "t1"), opt("Tag {3}", "t2")],
+    }),
+  ],
+})
+
+// ---- Composite & real ------------------------------------------------------
+
+fixtures.push({
+  name: "kitchen-sink",
+  formName: "Kitchen Sink",
+  submitLabel: "Submit Everything",
+  fields: [
+    input("text", { required: true, description: "above", descriptionPosition: "above-control" }),
+    input("count", { inputType: "number", validation: { min: 0, max: 5 } }),
+    textarea("message", { rows: 5 }),
+    checkbox("terms", { required: true }),
+    toggle("subscribe"),
+    select("category", { required: true }),
+    radioGroup("priority", { orientation: "horizontal" }),
+    checkboxGroup("interests", { required: true }),
+    slider("rating", { min: 1, max: 5, step: 1 }),
+    combobox("assignee", { displayStyle: "trigger", clearable: true }),
+    combobox("labels", { multiple: true, displayStyle: "input" }),
+  ],
+})
+
+for (const preset of FORM_PRESETS)
+  fixtures.push({
+    name: `preset-${preset.id}`,
+    formName: preset.formName,
+    submitLabel: preset.submitLabel,
+    fields: preset.fields,
+  })
+
+// Field names double as virtual-file names in the harness; a collision would
+// silently overwrite a case, so fail loudly instead.
+const seen = new Set<string>()
+for (const f of fixtures) {
+  if (seen.has(f.name)) throw new Error(`Duplicate codegen fixture name: ${f.name}`)
+  seen.add(f.name)
+}
+
+export const CODEGEN_FIXTURES: CodegenFixture[] = fixtures
