@@ -1,9 +1,9 @@
 import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
 
 import { ReactHookForm, TanStack } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { CtaButton } from "@/components/landing/cta-button"
 import { BuilderShowcase } from "@/components/landing/builder-showcase"
 
 export function Hero() {
@@ -37,14 +37,7 @@ export function Hero() {
             TanStack Form code with Zod — no boilerplate.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              nativeButton={false}
-              render={<Link href="/builder" />}
-            >
-              Open the builder
-              <ArrowRightIcon data-icon="inline-end" />
-            </Button>
+            <CtaButton location="hero" />
             <Button
               size="lg"
               variant="outline"

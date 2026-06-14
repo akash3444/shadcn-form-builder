@@ -1,7 +1,7 @@
 import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { CtaButton } from "@/components/landing/cta-button"
 
 import { ThemeToggle } from "./theme-toggle"
 
@@ -48,14 +48,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <Button
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/builder" />}
-          >
-            Open builder
-            <ArrowRightIcon data-icon="inline-end" />
-          </Button>
+          <CtaButton location="header" size="sm" label="Open builder" />
         </div>
       </div>
     </header>

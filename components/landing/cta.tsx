@@ -1,7 +1,4 @@
-import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import { CtaButton } from "@/components/landing/cta-button"
 
 export function Cta() {
   return (
@@ -11,19 +8,14 @@ export function Cta() {
           Start building your form now.
         </h2>
         <p className="mx-auto mt-4 max-w-[48ch] text-base text-pretty text-primary-foreground/70">
-          No signup, no setup. Open the builder and copy production-ready code in
-          minutes.
+          No signup, no setup. Open the builder and copy production-ready code
+          in minutes.
         </p>
         <div className="mt-8 flex justify-center">
-          <Button
-            size="lg"
+          <CtaButton
+            location="cta_section"
             className="bg-background text-foreground hover:bg-background/90"
-            nativeButton={false}
-            render={<Link href="/builder" />}
-          >
-            Open the builder
-            <ArrowRightIcon data-icon="inline-end" />
-          </Button>
+          />
         </div>
       </div>
     </section>
