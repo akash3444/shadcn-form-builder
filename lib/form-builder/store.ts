@@ -2,7 +2,7 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { arrayMove } from "@dnd-kit/sortable"
 import type { FormField, FieldType, FieldOption, FormLibrary } from "./types"
-import type { FormPreset } from "./presets"
+import { FORM_PRESETS, type FormPreset } from "./presets"
 import {
   labelToKey,
   generateId,
@@ -98,13 +98,28 @@ function createDefaultField(type: FieldType): FormField {
   }
 }
 
-const initialState: FormBuilderState = {
+// A truly blank slate — used when the user clears the form.
+const blankState: FormBuilderState = {
   formName: "My Form",
   submitLabel: "Submit",
   fields: [],
   selectedFieldId: null,
   formLibrary: "react-hook-form",
 }
+
+// New visitors (no persisted state) start from a populated example rather than
+// an empty canvas. The marketing embed relies on this too, so it never renders
+// blank.
+const DEFAULT_PRESET = FORM_PRESETS.find((preset) => preset.id === "sign-up")
+
+const initialState: FormBuilderState = DEFAULT_PRESET
+  ? {
+      ...blankState,
+      formName: DEFAULT_PRESET.formName,
+      submitLabel: DEFAULT_PRESET.submitLabel,
+      fields: DEFAULT_PRESET.fields,
+    }
+  : blankState
 
 export const useFormBuilderStore = create<FormBuilderStore>()(
   persist(
@@ -225,8 +240,7 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
       // preference, not form content.
       clearForm: () =>
         set((state) => ({
-          ...initialState,
-          fields: [],
+          ...blankState,
           formLibrary: state.formLibrary,
         })),
 

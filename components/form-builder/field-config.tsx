@@ -8,6 +8,7 @@ import type {
 } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { labelToKey } from "@/lib/form-builder/utils"
+import { useBuilderContext } from "./builder-context"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -38,6 +39,7 @@ interface FieldConfigProps {
 
 export function FieldConfig({ field }: FieldConfigProps) {
   const updateField = useFormBuilderStore((s) => s.updateField)
+  const { embedded } = useBuilderContext()
 
   // The field name is a read-only, auto-derived schema key — it always tracks
   // the label.
@@ -50,7 +52,11 @@ export function FieldConfig({ field }: FieldConfigProps) {
       <div className="space-y-2.5">
         <LabeledRow label="Label" htmlFor={`label-${field.id}`}>
           <Input
-            autoFocus
+            // Focus on field select so you can start typing right away. Off in
+            // the embedded showcase (landing page iframe): a passive demo
+            // shouldn't grab focus, and focusing inside the iframe would scroll
+            // the marketing page down to the embed on load.
+            autoFocus={!embedded}
             id={`label-${field.id}`}
             value={field.label}
             onChange={(e) => handleLabelChange(e.target.value)}
