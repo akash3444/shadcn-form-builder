@@ -1,27 +1,35 @@
 import type { Metadata } from "next"
 
-import { Button } from "@/components/ui/button"
+import { SiteHeader } from "@/components/landing/site-header"
+import { Hero } from "@/components/landing/hero"
+import { GenerationTargets } from "@/components/landing/generation-targets"
+import { Features } from "@/components/landing/features"
+import { HowItWorks } from "@/components/landing/how-it-works"
+import { FieldTypes } from "@/components/landing/field-types"
+import { Cta } from "@/components/landing/cta"
+import { SiteFooter } from "@/components/landing/site-footer"
 
 export const metadata: Metadata = {
-  title: "FormCanvas",
+  title: "FormCanvas — Build forms visually, ship production code",
   description:
-    "A visual form builder that generates production-ready React Hook Form + Zod code from shadcn/ui components.",
+    "A visual form builder that generates production-ready React Hook Form or TanStack Form code with Zod validation, straight from shadcn/ui components.",
 }
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
+    <div className="isolate flex min-h-svh flex-col">
+      <SiteHeader />
+
+      <main className="flex-1">
+        <Hero />
+        <GenerationTargets />
+        <Features />
+        <HowItWorks />
+        <FieldTypes />
+        <Cta />
+      </main>
+
+      <SiteFooter />
     </div>
   )
 }
