@@ -1,5 +1,6 @@
 "use client"
 
+import posthog from "posthog-js"
 import { useMemo } from "react"
 import { Code2, Eye } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -55,6 +56,11 @@ export function FormPreview() {
   return (
     <Tabs
       defaultValue="preview"
+      onValueChange={(value) => {
+        if (value === "code") {
+          posthog.capture("code_viewed", { form_library: formLibrary })
+        }
+      }}
       className="flex h-full flex-col overflow-hidden"
     >
       <div className="flex shrink-0 items-center justify-between border-b bg-sidebar px-4 py-2">
@@ -71,7 +77,13 @@ export function FormPreview() {
 
         <Select
           value={formLibrary}
-          onValueChange={(value) => setFormLibrary(value as FormLibrary)}
+          onValueChange={(value) => {
+            posthog.capture("form_library_switched", {
+              from_library: formLibrary,
+              to_library: value,
+            })
+            setFormLibrary(value as FormLibrary)
+          }}
           items={FORM_LIBRARY_OPTIONS}
         >
           <SelectTrigger size="sm" className="w-46">

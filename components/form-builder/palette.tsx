@@ -1,5 +1,6 @@
 "use client"
 
+import posthog from "posthog-js"
 import type { FieldType } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -29,8 +30,16 @@ const PALETTE_CATEGORIES: PaletteCategory[] = [
     label: "Selection",
     items: [
       { type: "select", label: "Select", description: "Dropdown picker" },
-      { type: "radio-group", label: "Radio Group", description: "Single choice" },
-      { type: "checkbox-group", label: "Checkbox Group", description: "Multiple choices" },
+      {
+        type: "radio-group",
+        label: "Radio Group",
+        description: "Single choice",
+      },
+      {
+        type: "checkbox-group",
+        label: "Checkbox Group",
+        description: "Multiple choices",
+      },
       { type: "combobox", label: "Combobox", description: "Searchable picker" },
     ],
   },
@@ -69,7 +78,12 @@ export function FieldPalette() {
                   return (
                     <button
                       key={item.type}
-                      onClick={() => addField(item.type)}
+                      onClick={() => {
+                        addField(item.type)
+                        posthog.capture("field_added", {
+                          field_type: item.type,
+                        })
+                      }}
                       className={cn(
                         "flex w-full items-center rounded-md border bg-background text-left",
                         "hover:bg-accent"

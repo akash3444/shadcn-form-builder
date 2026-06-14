@@ -1,5 +1,6 @@
 "use client"
 
+import posthog from "posthog-js"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -26,11 +27,21 @@ export function PresetsPanel({ onLoad }: PresetsPanelProps) {
   const hasFields = useFormBuilderStore((s) => s.fields.length > 0)
   const [pendingPreset, setPendingPreset] = useState<FormPreset | null>(null)
 
+  function capturePresetLoaded(preset: FormPreset, replacedExisting: boolean) {
+    posthog.capture("preset_loaded", {
+      preset_id: preset.id,
+      preset_name: preset.name,
+      preset_field_count: preset.fields.length,
+      replaced_existing: replacedExisting,
+    })
+  }
+
   function handleCardClick(preset: FormPreset) {
     if (hasFields) {
       setPendingPreset(preset)
     } else {
       loadPreset(preset)
+      capturePresetLoaded(preset, false)
       onLoad()
     }
   }
@@ -38,8 +49,16 @@ export function PresetsPanel({ onLoad }: PresetsPanelProps) {
   function handleConfirm() {
     if (!pendingPreset) return
     loadPreset(pendingPreset)
+    capturePresetLoaded(pendingPreset, true)
     setPendingPreset(null)
     onLoad()
+  }
+
+  function handleCancel() {
+    if (pendingPreset) {
+      posthog.capture("preset_load_cancelled", { preset_id: pendingPreset.id })
+    }
+    setPendingPreset(null)
   }
 
   return (
@@ -95,9 +114,7 @@ export function PresetsPanel({ onLoad }: PresetsPanelProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingPreset(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm}>
               Replace
             </AlertDialogAction>

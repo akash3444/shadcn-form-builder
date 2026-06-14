@@ -83,11 +83,12 @@ export function PreviewForm({
       formName={formName}
       submitLabel={submitLabel}
       fields={fields}
+      formLibrary={formLibrary}
     />
   )
 }
 
-type InnerPreviewProps = Omit<PreviewFormProps, "formLibrary">
+type InnerPreviewProps = PreviewFormProps
 
 function ReactHookFormPreview({
   formName,
