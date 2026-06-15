@@ -1,7 +1,12 @@
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu"
 import { CtaButton } from "@/components/landing/cta-button"
 
 import { ThemeToggle } from "./theme-toggle"
@@ -20,23 +25,17 @@ export function SiteHeader() {
           <Logo />
         </Link>
 
-        <nav
-          className="flex items-center gap-1 max-sm:hidden"
-          aria-label="Main"
-        >
-          {NAV_LINKS.map((link) => (
-            <Button
-              key={link.href}
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              nativeButton={false}
-              render={<Link href={link.href} />}
-            >
-              {link.label}
-            </Button>
-          ))}
-        </nav>
+        <NavigationMenu className="max-sm:hidden" aria-label="Main">
+          <NavigationMenuList className="gap-2">
+            {NAV_LINKS.map((link) => (
+              <NavigationMenuItem key={link.href}>
+                <NavigationMenuLink render={<Link href={link.href} />}>
+                  {link.label}
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
 
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
