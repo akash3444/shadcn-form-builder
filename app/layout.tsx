@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Geist_Mono, Space_Grotesk } from "next/font/google"
 
 import { Toaster } from "sonner"
@@ -16,6 +17,17 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/site.webmanifest",
+}
 
 export default function RootLayout({
   children,
