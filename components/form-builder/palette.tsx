@@ -23,6 +23,7 @@ const PALETTE_CATEGORIES: PaletteCategory[] = [
     label: "Text",
     items: [
       { type: "input", label: "Input", description: "Single-line text" },
+      { type: "password", label: "Password", description: "Masked input" },
       { type: "textarea", label: "Textarea", description: "Multi-line text" },
     ],
   },

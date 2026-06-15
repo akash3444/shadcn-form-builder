@@ -2,6 +2,7 @@ import type {
   FormField,
   FormLibrary,
   InputField,
+  PasswordField,
   TextareaField,
   SelectField,
   RadioGroupField,
@@ -23,6 +24,8 @@ import {
   buildOptionsSection,
   buildSchemaBlock,
   buildDefaultValueLines,
+  buildPasswordStateLines,
+  passwordShowVar,
 } from "./codegen-shared"
 import { generateTanstackFormCode } from "./code-generator-tanstack"
 
@@ -65,6 +68,55 @@ function generateFieldJSX(field: FormField): string {
       <Input
         ${inputProps}
       />
+    )}
+  />${descEl(field, "below-control")}${errorEl}
+</Field>`
+    }
+
+    case "password": {
+      const f = field as PasswordField
+      const control = f.showToggle
+        ? (() => {
+            const show = passwordShowVar(f)
+            const setShow = `setShow${
+              f.name.charAt(0).toUpperCase() + f.name.slice(1)
+            }`
+            return `<InputGroup>
+        <InputGroupInput
+          id="${f.name}"
+          type={${show} ? "text" : "password"}
+          ${placeholderProp(f.placeholder)}
+          aria-invalid={fieldState.invalid}
+          {...field}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            type="button"
+            size="icon-xs"
+            aria-label={${show} ? "Hide password" : "Show password"}
+            onClick={() => ${setShow}((prev) => !prev)}
+          >
+            {${show} ? <EyeOffIcon /> : <EyeIcon />}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>`
+          })()
+        : `<Input
+        id="${f.name}"
+        type="password"
+        ${placeholderProp(f.placeholder)}
+        aria-invalid={fieldState.invalid}
+        {...field}
+      />`
+      return `<Field data-invalid={!!form.formState.errors.${f.name}}>
+  <FieldLabel htmlFor="${f.name}">
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
+  <Controller
+    name="${f.name}"
+    control={form.control}
+    render={({ field, fieldState }) => (
+      ${control}
     )}
   />${descEl(field, "below-control")}${errorEl}
 </Field>`
@@ -384,7 +436,7 @@ function generateReactHookFormCode(
 ${buildOptionsSection(fields)}${buildSchemaBlock(camel, pascal, fields)}
 
 export function ${pascal}Form() {
-  const form = useForm<${pascal}FormValues>({
+${buildPasswordStateLines(fields)}  const form = useForm<${pascal}FormValues>({
     resolver: zodResolver(${camel}FormSchema),
     defaultValues: {
 ${buildDefaultValueLines(fields)}

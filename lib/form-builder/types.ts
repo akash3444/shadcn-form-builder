@@ -3,6 +3,7 @@ export type FormLibrary = "react-hook-form" | "tanstack-form"
 
 export type FieldType =
   | "input"
+  | "password"
   | "textarea"
   | "checkbox"
   | "switch"
@@ -12,7 +13,7 @@ export type FieldType =
   | "slider"
   | "combobox"
 
-export type InputType = "text" | "email" | "password" | "url" | "tel" | "number"
+export type InputType = "text" | "email" | "url" | "tel" | "number"
 
 export interface FieldOption {
   id: string
@@ -45,6 +46,13 @@ export interface InputField extends BaseField {
   type: "input"
   inputType: InputType
   validation?: NumberValidation | StringValidation
+}
+
+export interface PasswordField extends BaseField {
+  type: "password"
+  /** Whether to render a show/hide visibility toggle inside the input. */
+  showToggle: boolean
+  validation?: StringValidation
 }
 
 export interface TextareaField extends BaseField {
@@ -103,6 +111,7 @@ export interface ComboboxField extends BaseField {
 
 export type FormField =
   | InputField
+  | PasswordField
   | TextareaField
   | CheckboxField
   | SwitchField

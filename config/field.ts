@@ -1,5 +1,6 @@
 import {
   Type,
+  KeyRound,
   AlignLeft,
   SquareCheck,
   ToggleLeft,
@@ -14,6 +15,7 @@ import type { FieldType } from "@/lib/form-builder/types"
 
 export const FIELD_ICONS: Record<FieldType, LucideIcon> = {
   input: Type,
+  password: KeyRound,
   textarea: AlignLeft,
   checkbox: SquareCheck,
   switch: ToggleLeft,
@@ -26,6 +28,7 @@ export const FIELD_ICONS: Record<FieldType, LucideIcon> = {
 
 export const FIELD_LABELS: Record<FieldType, string> = {
   input: "Input",
+  password: "Password",
   textarea: "Textarea",
   checkbox: "Checkbox",
   switch: "Switch",

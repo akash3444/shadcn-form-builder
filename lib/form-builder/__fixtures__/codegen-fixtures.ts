@@ -10,6 +10,7 @@ import type {
   InputField,
   InputType,
   NumberValidation,
+  PasswordField,
   RadioGroupField,
   SelectField,
   SliderField,
@@ -56,6 +57,9 @@ const baseDefaults = {
 
 function input(name: string, over: Partial<InputField> = {}): InputField {
   return { id: name, type: "input", inputType: "text", label: name, name, ...baseDefaults, ...over }
+}
+function password(name: string, over: Partial<PasswordField> = {}): PasswordField {
+  return { id: name, type: "password", showToggle: true, label: name, name, ...baseDefaults, ...over }
 }
 function textarea(name: string, over: Partial<TextareaField> = {}): TextareaField {
   return { id: name, type: "textarea", label: name, name, rows: 4, ...baseDefaults, ...over }
@@ -155,10 +159,30 @@ for (const t of ["email", "url"] as InputType[])
     for (const val of [NUMBER_VALIDATIONS[0], STRING_VALIDATIONS[3]] as { tag: string; v: StringValidation }[])
       one(`input-${t}-${r.tag}-${val.tag}`, input("value", { inputType: t, required: r.required, validation: val.v }))
 
-// Password/Tel: required/optional (string validation already covered by text).
-for (const t of ["password", "tel"] as InputType[])
+// Tel: required/optional (string validation already covered by text).
+for (const t of ["tel"] as InputType[])
   for (const r of REQ)
     one(`input-${t}-${r.tag}`, input("value", { inputType: t, required: r.required }))
+
+// Password: its own field type. Cross required/optional × toggle on/off (the
+// toggle drives the InputGroup + useState import path), plus a length-validated
+// case. A multi-password fixture confirms the per-field state vars stay unique.
+for (const r of REQ)
+  for (const tog of [true, false])
+    one(
+      `password-${r.tag}-toggle-${tog}`,
+      password("value", { required: r.required, showToggle: tog })
+    )
+one("password-minmax", password("value", { validation: { minLength: 8, maxLength: 64 } }))
+fixtures.push({
+  name: "password-multi",
+  formName: "password-multi",
+  submitLabel: "Save",
+  fields: [
+    password("password", { required: true }),
+    password("confirmPassword", { required: true }),
+  ],
+})
 
 // Input description placement (the `descEl` + FieldDescription import path).
 for (const d of DESC)

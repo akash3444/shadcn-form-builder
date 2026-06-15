@@ -100,9 +100,9 @@ export const FORM_PRESETS: FormPreset[] = [
         placeholder: "john@example.com", description: "", descriptionPosition: "below-control" as const,required: true,
       },
       {
-        id: "su-f4", type: "input", inputType: "password",
+        id: "su-f4", type: "password", showToggle: true, validation: { minLength: 8 },
         label: "Password", name: "password",
-        placeholder: "••••••••", description: "Must be at least 8 characters", descriptionPosition: "below-control" as const,required: true,
+        placeholder: "Create a password", description: "", descriptionPosition: "below-control" as const,required: true,
       },
       {
         id: "su-f6", type: "checkbox",

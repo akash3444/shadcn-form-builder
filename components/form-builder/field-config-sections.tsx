@@ -132,8 +132,8 @@ function MultiSelectCombobox({
 export function DefaultValueSection({ field }: { field: FormField }) {
   const updateField = useFormBuilderStore((s) => s.updateField)
 
-  // Excluded for the password subtype.
-  if (field.type === "input" && field.inputType === "password") return null
+  // Excluded for password fields.
+  if (field.type === "password") return null
 
   return (
     <div className="space-y-2.5">
@@ -452,15 +452,17 @@ export function ValidationSection({ field }: { field: FormField }) {
     field.type === "input" && field.inputType === "number"
   const showStringValidation =
     field.type === "textarea" ||
-    (field.type === "input" &&
-      ["text", "password", "tel"].includes(field.inputType))
+    field.type === "password" ||
+    (field.type === "input" && ["text", "tel"].includes(field.inputType))
 
   const numVal: NumberValidation =
     field.type === "input" && field.inputType === "number"
       ? ((field.validation ?? {}) as NumberValidation)
       : {}
   const strVal: StringValidation =
-    field.type === "input" || field.type === "textarea"
+    field.type === "input" ||
+    field.type === "textarea" ||
+    field.type === "password"
       ? ((field.validation ?? {}) as StringValidation)
       : {}
 

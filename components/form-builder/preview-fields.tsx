@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { EyeIcon, EyeOffIcon } from "lucide-react"
 import { Controller, type Control } from "react-hook-form"
 import {
   Field,
@@ -10,9 +12,15 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field"
-import type { FormField } from "@/lib/form-builder/types"
+import type { FormField, PasswordField } from "@/lib/form-builder/types"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
@@ -79,6 +87,67 @@ function FieldWrapper({
   )
 }
 
+/**
+ * Password control with its own visibility state. Split into a component so the
+ * `useState` hook isn't called from inside the PreviewField switch. Mirrors the
+ * generated code: a masked Input, optionally wrapped in an InputGroup with an
+ * eye toggle.
+ */
+function PasswordControl({
+  field,
+  control,
+}: {
+  field: PasswordField
+  control: PreviewControl
+}) {
+  const [show, setShow] = useState(false)
+  return (
+    <Controller
+      name={field.name}
+      control={control}
+      render={({ field: f, fieldState }) =>
+        field.showToggle ? (
+          <InputGroup>
+            <InputGroupInput
+              id={field.name}
+              type={show ? "text" : "password"}
+              placeholder={field.placeholder}
+              aria-invalid={fieldState.invalid}
+              value={(f.value as string | undefined) ?? ""}
+              onChange={f.onChange}
+              onBlur={f.onBlur}
+              name={f.name}
+              ref={f.ref}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                type="button"
+                size="icon-xs"
+                aria-label={show ? "Hide password" : "Show password"}
+                onClick={() => setShow((prev) => !prev)}
+              >
+                {show ? <EyeOffIcon /> : <EyeIcon />}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+        ) : (
+          <Input
+            id={field.name}
+            type="password"
+            placeholder={field.placeholder}
+            aria-invalid={fieldState.invalid}
+            value={(f.value as string | undefined) ?? ""}
+            onChange={f.onChange}
+            onBlur={f.onBlur}
+            name={f.name}
+            ref={f.ref}
+          />
+        )
+      }
+    />
+  )
+}
+
 interface PreviewFieldProps {
   field: FormField
   control: PreviewControl
@@ -124,6 +193,20 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
               />
             )}
           />
+        </FieldWrapper>
+      )
+
+    case "password":
+      return (
+        <FieldWrapper
+          label={field.label}
+          required={field.required}
+          description={field.description}
+          descriptionPosition={field.descriptionPosition}
+          error={error}
+          htmlFor={field.name}
+        >
+          <PasswordControl field={field} control={control} />
         </FieldWrapper>
       )
 

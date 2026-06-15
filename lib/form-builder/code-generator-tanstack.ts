@@ -1,6 +1,7 @@
 import type {
   FormField,
   InputField,
+  PasswordField,
   TextareaField,
   SelectField,
   RadioGroupField,
@@ -22,6 +23,8 @@ import {
   buildOptionsSection,
   buildSchemaBlock,
   buildDefaultValueLines,
+  buildPasswordStateLines,
+  passwordShowVar,
 } from "./codegen-shared"
 
 /**
@@ -82,6 +85,55 @@ ${bindings}
     onBlur={field.handleBlur}
     aria-invalid={isInvalid}
   />${descEl(field, "below-control")}${error}
+</Field>`
+    }
+
+    case "password": {
+      const f = field as PasswordField
+      const control = f.showToggle
+        ? (() => {
+            const show = passwordShowVar(f)
+            const setShow = `setShow${
+              f.name.charAt(0).toUpperCase() + f.name.slice(1)
+            }`
+            return `<InputGroup>
+    <InputGroupInput
+      id="${f.name}"
+      name="${f.name}"
+      type={${show} ? "text" : "password"}
+      ${placeholderProp(f.placeholder)}
+      value={field.state.value}
+      onChange={(e) => field.handleChange(e.target.value)}
+      onBlur={field.handleBlur}
+      aria-invalid={isInvalid}
+    />
+    <InputGroupAddon align="inline-end">
+      <InputGroupButton
+        type="button"
+        size="icon-xs"
+        aria-label={${show} ? "Hide password" : "Show password"}
+        onClick={() => ${setShow}((prev) => !prev)}
+      >
+        {${show} ? <EyeOffIcon /> : <EyeIcon />}
+      </InputGroupButton>
+    </InputGroupAddon>
+  </InputGroup>`
+          })()
+        : `<Input
+    id="${f.name}"
+    name="${f.name}"
+    type="password"
+    ${placeholderProp(f.placeholder)}
+    value={field.state.value}
+    onChange={(e) => field.handleChange(e.target.value)}
+    onBlur={field.handleBlur}
+    aria-invalid={isInvalid}
+  />`
+      return `<Field data-invalid={isInvalid}>
+  <FieldLabel htmlFor="${f.name}">
+    ${label}${reqSpan}
+  </FieldLabel>${descEl(field, "above-control")}
+  ${control}${descEl(field, "below-control")}${error}
 </Field>`
     }
 
@@ -347,7 +399,7 @@ export function generateTanstackFormCode(
 ${buildOptionsSection(fields)}${buildSchemaBlock(camel, pascal, fields)}
 
 export function ${pascal}Form() {
-  const form = useForm({
+${buildPasswordStateLines(fields)}  const form = useForm({
     defaultValues: {
 ${buildDefaultValueLines(fields)}
     } as ${pascal}FormValues,

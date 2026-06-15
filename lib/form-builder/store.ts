@@ -39,6 +39,7 @@ type FormBuilderStore = FormBuilderState & FormBuilderActions
 
 const defaultFieldNames: Record<FieldType, string> = {
   input: "Text Field",
+  password: "Password",
   textarea: "Text Area",
   checkbox: "Checkbox",
   switch: "Switch",
@@ -69,6 +70,14 @@ function createDefaultField(type: FieldType): FormField {
   switch (type) {
     case "input":
       return { ...base, type: "input", inputType: "text" }
+    case "password":
+      return {
+        ...base,
+        type: "password",
+        placeholder: "Enter your password",
+        showToggle: true,
+        validation: { minLength: 8 },
+      }
     case "textarea":
       return { ...base, type: "textarea", rows: 3 }
     case "checkbox":

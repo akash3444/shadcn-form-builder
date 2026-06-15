@@ -4,6 +4,7 @@ import type {
   RadioGroupField,
   CheckboxGroupField,
   ComboboxField,
+  PasswordField,
 } from "./types"
 import {
   fieldSchemaSpec,
@@ -126,6 +127,14 @@ export function buildImports(
   const hasDescription = fields.some((f) => f.description)
   const hasHorizontal = types.has("checkbox") || types.has("switch")
   const hasGrouped = types.has("radio-group") || types.has("checkbox-group")
+  // A password field renders as a masked Input; with its toggle enabled it
+  // wraps that input in an InputGroup with an eye button driven by local state.
+  const hasPasswordToggle = fields.some(
+    (f) => f.type === "password" && f.showToggle
+  )
+  const hasPlainInput =
+    types.has("input") ||
+    fields.some((f) => f.type === "password" && !f.showToggle)
   const fieldComponents = [
     "Field",
     ...(hasHorizontal ? ["FieldContent"] : []),
@@ -139,14 +148,22 @@ export function buildImports(
   const imports: string[] = [
     '"use client"',
     "",
+    ...(hasPasswordToggle ? ['import { useState } from "react"'] : []),
     ...formLibraryImports,
+    ...(hasPasswordToggle
+      ? ['import { EyeIcon, EyeOffIcon } from "lucide-react"']
+      : []),
     "",
     'import { Button } from "@/components/ui/button"',
     `import { ${fieldComponents} } from "@/components/ui/field"`,
   ]
 
-  if (types.has("input"))
+  if (hasPlainInput)
     imports.push('import { Input } from "@/components/ui/input"')
+  if (hasPasswordToggle)
+    imports.push(
+      'import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"'
+    )
   if (types.has("textarea"))
     imports.push('import { Textarea } from "@/components/ui/textarea"')
   if (types.has("checkbox") || types.has("checkbox-group"))
@@ -248,4 +265,35 @@ export function buildDefaultValueLines(fields: FormField[]): string {
   return fields
     .map((f) => `      ${f.name}: ${getDefaultValue(f)},`)
     .join("\n")
+}
+
+/** Uppercases the first character, leaving the rest untouched ("a" → "A"). */
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+/** The visibility state variable name for a password field, e.g. `showPassword`. */
+export function passwordShowVar(field: PasswordField): string {
+  return `show${capitalize(field.name)}`
+}
+
+/**
+ * The `const [showX, setShowX] = useState(false)` lines (with trailing spacing)
+ * for every password field whose toggle is enabled, or "" when there are none.
+ * Hoisted to the component body because the toggle button needs per-field state
+ * the field's render callback can't declare.
+ */
+export function buildPasswordStateLines(fields: FormField[]): string {
+  const toggled = fields.filter(
+    (f): f is PasswordField => f.type === "password" && f.showToggle
+  )
+  if (toggled.length === 0) return ""
+  return (
+    toggled
+      .map((f) => {
+        const v = passwordShowVar(f)
+        return `  const [${v}, setShow${capitalize(f.name)}] = useState(false)`
+      })
+      .join("\n") + "\n\n"
+  )
 }

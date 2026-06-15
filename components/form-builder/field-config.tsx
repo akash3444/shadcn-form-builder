@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   LabeledRow,
+  SwitchRow,
   DefaultValueSection,
   ComboboxSettingsSection,
   SliderRangeSection,
@@ -123,14 +124,7 @@ export function FieldConfig({ field }: FieldConfigProps) {
               </SelectTrigger>
               <SelectContent>
                 {(
-                  [
-                    "text",
-                    "number",
-                    "email",
-                    "password",
-                    "url",
-                    "tel",
-                  ] as InputType[]
+                  ["text", "number", "email", "url", "tel"] as InputType[]
                 ).map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -139,6 +133,14 @@ export function FieldConfig({ field }: FieldConfigProps) {
               </SelectContent>
             </Select>
           </LabeledRow>
+        )}
+
+        {field.type === "password" && (
+          <SwitchRow
+            label="Show toggle"
+            checked={field.showToggle}
+            onChange={(v) => updateField(field.id, { showToggle: v })}
+          />
         )}
       </div>
 

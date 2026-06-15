@@ -107,6 +107,7 @@ export function fieldSchemaSpec(field: FormField): SchemaSpec {
       )
     }
     case "textarea":
+    case "password":
       return stringSpec(field.required, (field.validation ?? {}) as StringValidation)
     case "checkbox":
     case "switch":
@@ -274,6 +275,7 @@ function fieldTypeDefault(field: FormField): unknown {
   switch (field.type) {
     case "input":
       return field.inputType === "number" ? undefined : ""
+    case "password":
     case "textarea":
     case "select":
     case "radio-group":
