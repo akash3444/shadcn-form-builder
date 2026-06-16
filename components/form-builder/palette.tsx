@@ -72,7 +72,10 @@ export function FieldPalette() {
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="scroll-mask-y-from-85%"
+      >
         <div className="space-y-4 p-3">
           {PALETTE_CATEGORIES.map((category) => (
             <div key={category.label} className="space-y-2">

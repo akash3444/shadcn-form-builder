@@ -184,7 +184,7 @@ export function FormPreview() {
           </div>
         )}
         <div className="relative flex-1 overflow-hidden">
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-4 z-10">
             <CopyButton code={activeFile.code} />
           </div>
           <div className="h-full overflow-auto">

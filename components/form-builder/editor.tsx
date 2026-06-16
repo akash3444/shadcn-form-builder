@@ -9,7 +9,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import {
@@ -165,14 +164,6 @@ export function FieldEditor() {
             </DndContext>
           )}
 
-          {fields.length > 0 && (
-            <>
-              <Separator />
-              <p className="bg-background px-4 py-2 text-xs text-muted-foreground">
-                Drag fields to reorder · Click to edit
-              </p>
-            </>
-          )}
         </TabsContent>
 
         <TabsContent

@@ -29,17 +29,17 @@ export function BuilderHeader() {
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5">
         <Button
           variant="ghost"
           size="sm"
           render={<Link href="/" />}
-          className="hit-area-y-3.5 hit-area-r-2.5 -ms-5"
+          className="hit-area-y-3.5 hit-area-r-2 -ms-5"
         >
           <ArrowLeftIcon />
           Back
         </Button>
-        <div className="h-8 w-px bg-border" />
+        <div className="-ms-2 h-8 w-px bg-border" />
         <Link
           href="/"
           aria-label="Back to home"
