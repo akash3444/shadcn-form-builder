@@ -67,7 +67,7 @@ export default function ChangelogPage() {
                   <h2 className="text-xl font-semibold tracking-tight">
                     {entry.data.title}
                   </h2>
-                  <div className="prose prose-no-margin mt-4 max-w-none">
+                  <div className="prose prose-no-margin text-foreground/70 mt-4 max-w-none">
                     <MDX components={components} />
                   </div>
                 </article>
