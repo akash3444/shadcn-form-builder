@@ -281,7 +281,7 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "ps-f9", type: "radio-group",
         label: "Profile Visibility", name: "profileVisibility",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: false,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "horizontal" as const, required: false,
         options: [
           { id: "ps-f9-o1", label: "Public", value: "public" },
           { id: "ps-f9-o2", label: "Friends Only", value: "friends-only" },
@@ -317,7 +317,7 @@ export const FORM_PRESETS: FormPreset[] = [
         id: "nl-f4", type: "checkbox-group",
         label: "Topics of Interest", name: "topicsOfInterest",
         placeholder: "", description: "Choose your interests", descriptionPosition: "below-control" as const,required: false,
-        orientation: "vertical",
+        orientation: "horizontal",
         options: [
           { id: "nl-f4-o1", label: "Technology", value: "technology" },
           { id: "nl-f4-o2", label: "Design", value: "design" },
@@ -329,17 +329,12 @@ export const FORM_PRESETS: FormPreset[] = [
       {
         id: "nl-f5", type: "radio-group",
         label: "Frequency Preference", name: "frequency",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "vertical" as const, required: true,
+        placeholder: "", description: "", descriptionPosition: "below-control" as const, orientation: "horizontal" as const, required: true,
         options: [
           { id: "nl-f5-o1", label: "Daily Digest", value: "daily" },
           { id: "nl-f5-o2", label: "Weekly Roundup", value: "weekly" },
           { id: "nl-f5-o3", label: "Monthly Summary", value: "monthly" },
         ],
-      },
-      {
-        id: "nl-f6", type: "checkbox",
-        label: "I agree to receive marketing emails", name: "agreeToReceive",
-        placeholder: "", description: "", descriptionPosition: "below-control" as const,required: true,
       },
     ],
   },
