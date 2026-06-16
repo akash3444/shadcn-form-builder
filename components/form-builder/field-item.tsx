@@ -2,10 +2,22 @@
 
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { GripVerticalIcon, Trash2Icon, ChevronDownIcon } from "lucide-react"
+import {
+  GripVerticalIcon,
+  Trash2Icon,
+  ChevronDownIcon,
+  EyeIcon,
+  EyeOffIcon,
+} from "lucide-react"
 import type { FormField } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { FieldConfig } from "./field-config"
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { FIELD_ICONS, FIELD_LABELS } from "@/config/field"
 import { cn } from "@/lib/utils"
 
@@ -15,7 +27,8 @@ interface FieldItemProps {
 }
 
 export function FieldItem({ field, isSelected }: FieldItemProps) {
-  const { selectField, removeField } = useFormBuilderStore()
+  const { selectField, removeField, toggleFieldVisibility } =
+    useFormBuilderStore()
 
   const {
     attributes,
@@ -32,6 +45,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
   }
 
   const Icon = FIELD_ICONS[field.type]
+  const isHidden = Boolean(field.hidden)
 
   return (
     <div
@@ -62,7 +76,10 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
           type="button"
           onClick={() => selectField(isSelected ? null : field.id)}
           aria-expanded={isSelected}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2 text-left",
+            isHidden && "opacity-50"
+          )}
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
             <Icon className="size-4 text-muted-foreground" />
@@ -72,7 +89,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
               {field.label || "Untitled"}
             </span>
             <span className="block text-xs text-muted-foreground">
-              {FIELD_LABELS[field.type]}
+              {isHidden ? "Hidden" : FIELD_LABELS[field.type]}
               {field.required && (
                 <span className="ml-1 text-destructive">*</span>
               )}
@@ -82,14 +99,46 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => removeField(field.id)}
-            className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-            aria-label="Remove field"
-          >
-            <Trash2Icon className="size-3.5" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              delay={300}
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => toggleFieldVisibility(field.id)}
+                  className="hit-area-x-1 hit-area-y-2 text-muted-foreground"
+                  aria-label={isHidden ? "Show field" : "Hide field"}
+                />
+              }
+            >
+              {isHidden ? <EyeOffIcon /> : <EyeIcon />}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isHidden ? "Show in preview & code" : "Hide from preview & code"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              delay={300}
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => removeField(field.id)}
+                  className="hit-area-x-0.75 hit-area-y-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Remove field"
+                />
+              }
+            >
+              <Trash2Icon />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Remove field</p>
+            </TooltipContent>
+          </Tooltip>
           <ChevronDownIcon
             aria-hidden="true"
             className={cn(

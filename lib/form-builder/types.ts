@@ -29,6 +29,12 @@ interface BaseField {
   description: string
   descriptionPosition: DescriptionPosition
   required: boolean
+  /**
+   * When true, the field is kept in the builder but excluded from the rendered
+   * preview and the generated code. Lets users park a field they're unsure
+   * about without losing its configuration. Absent/false means visible.
+   */
+  hidden?: boolean
   defaultValue?: string | number | boolean | string[]
 }
 

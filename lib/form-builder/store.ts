@@ -25,6 +25,7 @@ interface FormBuilderActions {
   setFormLibrary: (formLibrary: FormLibrary) => void
   addField: (type: FieldType) => void
   removeField: (id: string) => void
+  toggleFieldVisibility: (id: string) => void
   updateField: (id: string, updates: Partial<FormField>) => void
   reorderFields: (activeId: string, overId: string) => void
   selectField: (id: string | null) => void
@@ -155,6 +156,13 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
           fields: state.fields.filter((f) => f.id !== id),
           selectedFieldId:
             state.selectedFieldId === id ? null : state.selectedFieldId,
+        })),
+
+      toggleFieldVisibility: (id) =>
+        set((state) => ({
+          fields: state.fields.map((f) =>
+            f.id === id ? { ...f, hidden: !f.hidden } : f
+          ),
         })),
 
       updateField: (id, updates) =>

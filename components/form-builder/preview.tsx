@@ -49,9 +49,15 @@ export function FormPreview() {
   const currentLibrary = FORM_LIBRARY_OPTIONS.find(
     (o) => o.value === formLibrary
   )
+  // Hidden fields stay in the builder but are excluded from both the rendered
+  // preview and the generated code
+  const visibleFields = useMemo(
+    () => fields.filter((f) => !f.hidden),
+    [fields]
+  )
   const files = useMemo(
-    () => generateFormCode(formName, submitLabel, fields, formLibrary),
-    [formName, submitLabel, fields, formLibrary]
+    () => generateFormCode(formName, submitLabel, visibleFields, formLibrary),
+    [formName, submitLabel, visibleFields, formLibrary]
   )
   const [activeFilename, setActiveFilename] = useState<string | null>(null)
   // Track the active file by name so the selection survives regeneration; fall
@@ -111,7 +117,7 @@ export function FormPreview() {
         <PreviewForm
           formName={formName}
           submitLabel={submitLabel}
-          fields={fields}
+          fields={visibleFields}
           formLibrary={formLibrary}
         />
       </TabsContent>
