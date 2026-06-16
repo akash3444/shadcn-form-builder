@@ -1,7 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import posthog from "posthog-js"
-import { Trash2Icon } from "lucide-react"
+import { ArrowLeftIcon, Trash2Icon } from "lucide-react"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
@@ -29,13 +30,29 @@ export function BuilderHeader() {
   return (
     <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
       <div className="flex items-center gap-3">
-        <Logo showWordmark={false} />
-        <div>
-          <h1 className="text-sm font-semibold">FormCanvas</h1>
-          <p className="text-xs text-muted-foreground">
-            Build forms visually, copy production-ready code
-          </p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          render={<Link href="/" />}
+          className="hit-area-y-3.5 hit-area-r-2.5 -ms-5"
+        >
+          <ArrowLeftIcon />
+          Back
+        </Button>
+        <div className="h-8 w-px bg-border" />
+        <Link
+          href="/"
+          aria-label="Back to home"
+          className="flex items-center gap-3 rounded-md transition-opacity hover:opacity-80"
+        >
+          <Logo showWordmark={false} />
+          <div>
+            <h1 className="text-sm font-semibold">FormCanvas</h1>
+            <p className="text-xs text-muted-foreground">
+              Build forms visually, copy production-ready code
+            </p>
+          </div>
+        </Link>
       </div>
 
       {hasFields && (
