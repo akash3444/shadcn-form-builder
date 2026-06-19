@@ -32,7 +32,7 @@ import {
   coerceComboboxDefault,
   isOptionField,
   isGroupableField,
-  groupsOf,
+  isGrouped,
   partitionByGroup,
   slugify,
 } from "@/lib/form-builder/utils"
@@ -259,7 +259,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">— No default —</SelectItem>
-            {isGroupableField(field) && groupsOf(field).length > 0
+            {isGrouped(field)
               ? partitionByGroup(field).map((group, i) => (
                   <SelectGroup key={i}>
                     {group.label ? (
@@ -287,9 +287,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
         <MultiSelectCombobox
           options={field.options}
           groups={
-            isGroupableField(field) && groupsOf(field).length > 0
-              ? partitionByGroup(field)
-              : undefined
+            isGrouped(field) ? partitionByGroup(field) : undefined
           }
           value={(field.defaultValue as string[] | undefined) ?? []}
           onChange={(v) =>
@@ -791,7 +789,7 @@ export function OptionsSection({ field }: { field: FormField }) {
   if (!isOptionField(field)) return null
 
   const groupable = isGroupableField(field)
-  const grouped = groupable && groupsOf(field).length > 0
+  const grouped = isGrouped(field)
 
   return (
     <div className="space-y-2">

@@ -28,7 +28,7 @@ export function groupsOf(field: GroupableField): OptionGroup[] {
 }
 
 /** True when a field currently has grouping turned on (at least one group). */
-export function isGrouped(field: FormField): boolean {
+export function isGrouped(field: FormField): field is GroupableField {
   return isGroupableField(field) && groupsOf(field).length > 0
 }
 
