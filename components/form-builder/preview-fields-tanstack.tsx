@@ -11,6 +11,7 @@ import {
   FieldSet,
 } from "@/components/ui/field"
 import type { FormField, DateField } from "@/lib/form-builder/types"
+import { isGrouped, partitionByGroup } from "@/lib/form-builder/utils"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -30,7 +31,10 @@ import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -41,11 +45,15 @@ import {
   ComboboxChips,
   ComboboxChipsInput,
   ComboboxClear,
+  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxGroup,
   ComboboxInput,
   ComboboxItem,
+  ComboboxLabel,
   ComboboxList,
+  ComboboxSeparator,
   ComboboxTrigger,
   ComboboxValue,
 } from "@/components/ui/combobox"
@@ -270,7 +278,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
           <Select
             value={String(api.state.value ?? "")}
             onValueChange={api.handleChange}
-            items={field.options}
+            items={isGrouped(field) ? partitionByGroup(field) : field.options}
           >
             <SelectTrigger
               id={field.name}
@@ -282,11 +290,25 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
               />
             </SelectTrigger>
             <SelectContent>
-              {field.options.map((opt) => (
-                <SelectItem key={opt.id} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
+              {isGrouped(field)
+                ? partitionByGroup(field).map((group, i) => (
+                    <SelectGroup key={group.id}>
+                      {i > 0 ? <SelectSeparator /> : null}
+                      {group.label ? (
+                        <SelectLabel>{group.label}</SelectLabel>
+                      ) : null}
+                      {group.items.map((opt) => (
+                        <SelectItem key={opt.id} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))
+                : field.options.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
             </SelectContent>
           </Select>
         </FieldWrapper>
@@ -416,7 +438,6 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
 
     case "combobox": {
       const opts = field.options
-      const values = opts.map((o) => o.value)
       const labelFor = (v: string) =>
         opts.find((o) => o.value === v)?.label ?? v
       const placeholder =
@@ -427,6 +448,43 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
       const triggerClass =
         "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
 
+      // Grouped: feed base-ui grouped value-strings and render group sections;
+      // flat: plain value strings. Shared across every display variant below.
+      const grouped = isGrouped(field)
+      const groups = grouped ? partitionByGroup(field) : []
+      const comboItems = grouped
+        ? groups.map((g) => ({
+            label: g.label,
+            items: g.items.map((o) => o.value),
+          }))
+        : opts.map((o) => o.value)
+      const comboList = grouped ? (
+        <ComboboxList>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(group: any, index: number) => (
+            <ComboboxGroup key={index} items={group.items}>
+              {index > 0 ? <ComboboxSeparator /> : null}
+              {group.label ? <ComboboxLabel>{group.label}</ComboboxLabel> : null}
+              <ComboboxCollection>
+                {(v: string) => (
+                  <ComboboxItem key={v} value={v}>
+                    {labelFor(v)}
+                  </ComboboxItem>
+                )}
+              </ComboboxCollection>
+            </ComboboxGroup>
+          )}
+        </ComboboxList>
+      ) : (
+        <ComboboxList>
+          {(v: string) => (
+            <ComboboxItem key={v} value={v}>
+              {labelFor(v)}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      )
+
       let control: React.ReactNode
       if (field.multiple) {
         const arr = Array.isArray(api.state.value)
@@ -436,7 +494,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
           control = (
             <Combobox
               multiple
-              items={values}
+              items={comboItems as never}
               itemToStringLabel={labelFor}
               value={arr}
               onValueChange={api.handleChange}
@@ -454,13 +512,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
               </ComboboxChips>
               <ComboboxContent>
                 <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                <ComboboxList>
-                  {(v: string) => (
-                    <ComboboxItem key={v} value={v}>
-                      {labelFor(v)}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
+                {comboList}
               </ComboboxContent>
             </Combobox>
           )
@@ -468,7 +520,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
           control = (
             <Combobox
               multiple
-              items={values}
+              items={comboItems as never}
               itemToStringLabel={labelFor}
               value={arr}
               onValueChange={api.handleChange}
@@ -493,13 +545,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
                   placeholder={searchPlaceholder}
                 />
                 <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                <ComboboxList>
-                  {(v: string) => (
-                    <ComboboxItem key={v} value={v}>
-                      {labelFor(v)}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
+                {comboList}
               </ComboboxContent>
             </Combobox>
           )
@@ -510,7 +556,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
         if (field.displayStyle === "trigger") {
           control = (
             <Combobox
-              items={values}
+              items={comboItems as never}
               itemToStringLabel={labelFor}
               value={single || null}
               onValueChange={(v) => api.handleChange(v ?? "")}
@@ -535,20 +581,14 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
                   placeholder={searchPlaceholder}
                 />
                 <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                <ComboboxList>
-                  {(v: string) => (
-                    <ComboboxItem key={v} value={v}>
-                      {labelFor(v)}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
+                {comboList}
               </ComboboxContent>
             </Combobox>
           )
         } else {
           control = (
             <Combobox
-              items={values}
+              items={comboItems as never}
               itemToStringLabel={labelFor}
               value={single || null}
               onValueChange={(v) => api.handleChange(v ?? "")}
@@ -561,13 +601,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
               />
               <ComboboxContent>
                 <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                <ComboboxList>
-                  {(v: string) => (
-                    <ComboboxItem key={v} value={v}>
-                      {labelFor(v)}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
+                {comboList}
               </ComboboxContent>
             </Combobox>
           )

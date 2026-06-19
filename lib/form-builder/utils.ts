@@ -1,4 +1,11 @@
-import type { FormField, OptionField, DateRangeValue } from "./types"
+import type {
+  FormField,
+  OptionField,
+  GroupableField,
+  OptionGroup,
+  FieldOption,
+  DateRangeValue,
+} from "./types"
 
 /** True for field types that carry a user-editable list of options. */
 export function isOptionField(field: FormField): field is OptionField {
@@ -8,6 +15,40 @@ export function isOptionField(field: FormField): field is OptionField {
     field.type === "checkbox-group" ||
     field.type === "combobox"
   )
+}
+
+/** True for option fields that support organizing their options into groups. */
+export function isGroupableField(field: FormField): field is GroupableField {
+  return field.type === "select" || field.type === "combobox"
+}
+
+/** A field's groups, treating an absent (pre-feature persisted) value as empty. */
+export function groupsOf(field: GroupableField): OptionGroup[] {
+  return field.groups ?? []
+}
+
+/** True when a field currently has grouping turned on (at least one group). */
+export function isGrouped(field: FormField): boolean {
+  return isGroupableField(field) && groupsOf(field).length > 0
+}
+
+/**
+ * Partitions a grouped field's flat options into ordered groups for rendering
+ * and code generation. Groups are emitted in `field.groups` order, each holding
+ * the options whose `groupId` matches (in flat-array order). Empty groups are
+ * dropped — they produce no heading in the output. The single source of the
+ * nested `[{ label, items }]` shape used by both the live preview and codegen.
+ */
+export function partitionByGroup(
+  field: GroupableField
+): { id: string; label: string; items: FieldOption[] }[] {
+  return groupsOf(field)
+    .map((group) => ({
+      id: group.id,
+      label: group.label,
+      items: field.options.filter((o) => o.groupId === group.id),
+    }))
+    .filter((group) => group.items.length > 0)
 }
 
 /**

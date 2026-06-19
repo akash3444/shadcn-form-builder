@@ -8,10 +8,13 @@ import {
 } from "lucide-react"
 import {
   Combobox,
+  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxGroup,
   ComboboxInput,
   ComboboxItem,
+  ComboboxLabel,
   ComboboxList,
   ComboboxTrigger,
 } from "@/components/ui/combobox"
@@ -25,14 +28,23 @@ import type {
   StringValidation,
 } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
-import { coerceComboboxDefault, isOptionField } from "@/lib/form-builder/utils"
+import {
+  coerceComboboxDefault,
+  isOptionField,
+  isGroupableField,
+  groupsOf,
+  partitionByGroup,
+} from "@/lib/form-builder/utils"
+import { GroupedOptionsEditor } from "./grouped-options-editor"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -83,24 +95,34 @@ function MultiSelectCombobox({
   options,
   value,
   onChange,
+  groups,
 }: {
   options: FieldOption[]
   value: string[]
   onChange: (v: string[]) => void
+  /** When present, options are shown under these group headings. */
+  groups?: { id: string; label: string; items: FieldOption[] }[]
 }) {
-  const items = options.map((o) => o.value)
+  const grouped = !!groups && groups.length > 0
+  const labelFor = (v: string) =>
+    options.find((o) => o.value === v)?.label ?? v
+
+  // base-ui needs grouped value-strings to keep grouping; flat is just values.
+  const items = grouped
+    ? groups!.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))
+    : options.map((o) => o.value)
 
   const displayText =
     value.length === 0
       ? "No default"
       : value.length === 1
-        ? (options.find((o) => o.value === value[0])?.label ?? value[0])
+        ? labelFor(value[0])
         : `${value.length} selected`
 
   return (
     <Combobox
       multiple
-      items={items}
+      items={items as never}
       value={value as never}
       onValueChange={onChange as never}
       disabled={options.length === 0}
@@ -112,14 +134,27 @@ function MultiSelectCombobox({
         <ComboboxInput showTrigger={false} placeholder="Search options..." />
         <ComboboxEmpty>No options found.</ComboboxEmpty>
         <ComboboxList>
-          {(item: string) => {
-            const option = options.find((o) => o.value === item)
-            return (
-              <ComboboxItem key={item} value={item}>
-                {option?.label ?? item}
-              </ComboboxItem>
-            )
-          }}
+          {grouped
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (group: any, index: number) => (
+                <ComboboxGroup key={index} items={group.items}>
+                  {group.label ? (
+                    <ComboboxLabel>{group.label}</ComboboxLabel>
+                  ) : null}
+                  <ComboboxCollection>
+                    {(item: string) => (
+                      <ComboboxItem key={item} value={item}>
+                        {labelFor(item)}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxCollection>
+                </ComboboxGroup>
+              )
+            : (item: string) => (
+                <ComboboxItem key={item} value={item}>
+                  {labelFor(item)}
+                </ComboboxItem>
+              )}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
@@ -226,11 +261,24 @@ export function DefaultValueSection({ field }: { field: FormField }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">— No default —</SelectItem>
-            {field.options.map((opt) => (
-              <SelectItem key={opt.id} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
+            {isGroupableField(field) && groupsOf(field).length > 0
+              ? partitionByGroup(field).map((group, i) => (
+                  <SelectGroup key={i}>
+                    {group.label ? (
+                      <SelectLabel>{group.label}</SelectLabel>
+                    ) : null}
+                    {group.items.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))
+              : field.options.map((opt) => (
+                  <SelectItem key={opt.id} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
           </SelectContent>
         </Select>
       )}
@@ -240,6 +288,11 @@ export function DefaultValueSection({ field }: { field: FormField }) {
         (field.type === "combobox" && field.multiple)) && (
         <MultiSelectCombobox
           options={field.options}
+          groups={
+            isGroupableField(field) && groupsOf(field).length > 0
+              ? partitionByGroup(field)
+              : undefined
+          }
           value={(field.defaultValue as string[] | undefined) ?? []}
           onChange={(v) =>
             updateField(field.id, {
@@ -736,15 +789,36 @@ export function OptionsSection({ field }: { field: FormField }) {
   const addOption = useFormBuilderStore((s) => s.addOption)
   const updateOption = useFormBuilderStore((s) => s.updateOption)
   const removeOption = useFormBuilderStore((s) => s.removeOption)
+  const toggleGrouping = useFormBuilderStore((s) => s.toggleGrouping)
   if (!isOptionField(field)) return null
+
+  const groupable = isGroupableField(field)
+  const grouped = groupable && groupsOf(field).length > 0
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Options
-      </p>
-      <div className="space-y-1.5">
-        {field.options.map((option) => (
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+          Options
+        </p>
+        {groupable && (
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            Group options
+            <Switch
+              checked={grouped}
+              onCheckedChange={() => toggleGrouping(field.id)}
+              size="sm"
+            />
+          </label>
+        )}
+      </div>
+
+      {grouped && groupable ? (
+        <GroupedOptionsEditor field={field} />
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            {field.options.map((option) => (
           <div key={option.id} className="flex items-center gap-1.5">
             <Input
               value={option.label}
@@ -779,15 +853,17 @@ export function OptionsSection({ field }: { field: FormField }) {
           </div>
         ))}
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 w-full text-xs"
-        onClick={() => addOption(field.id)}
-      >
-        <PlusIcon className="mr-1 size-3.5" />
-        Add option
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-full text-xs"
+            onClick={() => addOption(field.id)}
+          >
+            <PlusIcon className="mr-1 size-3.5" />
+            Add option
+          </Button>
+        </>
+      )}
     </div>
   )
 }

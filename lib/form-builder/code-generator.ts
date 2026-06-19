@@ -11,7 +11,7 @@ import type {
   ComboboxField,
   DateField,
 } from "./types"
-import { toKebabCase, toPascalCase } from "./utils"
+import { toKebabCase, toPascalCase, isGrouped } from "./utils"
 import { dateMatcherExprs } from "./validation-spec"
 import {
   indent,
@@ -168,6 +168,19 @@ function generateFieldJSX(field: FormField): string {
     case "select": {
       const f = field as SelectField
       const constName = getOptionsConstName(f.name)
+      const selectInner = isGrouped(f)
+        ? `{${constName}.map((group, i) => (
+            <SelectGroup key={i}>
+              {i > 0 ? <SelectSeparator /> : null}
+              {group.label ? <SelectLabel>{group.label}</SelectLabel> : null}
+              {group.items.map((item) => (
+                <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+              ))}
+            </SelectGroup>
+          ))}`
+        : `{${constName}.map((o) => (
+            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          ))}`
       return `<Field data-invalid={!!form.formState.errors.${f.name}}>
   <FieldLabel htmlFor="${f.name}">
     ${label}${reqSpan}
@@ -181,9 +194,7 @@ function generateFieldJSX(field: FormField): string {
           <SelectValue placeholder="${escapeJsxAttr(f.placeholder) || "Select an option"}" />
         </SelectTrigger>
         <SelectContent>
-          {${constName}.map((o) => (
-            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-          ))}
+          ${selectInner}
         </SelectContent>
       </Select>
     )}
@@ -293,22 +304,53 @@ function generateFieldJSX(field: FormField): string {
       const searchPlaceholderAttr = escapeJsxAttr(f.searchPlaceholder || "Search...")
       const emptyTextText = escapeJsxText(f.emptyText || "No results found.")
 
+      // When grouped, base-ui needs grouped value-strings (`{ label, items }`
+      // where items are the option values) so the committed value stays a
+      // string; labels are resolved against the flattened option list. See ADR
+      // 0001. Ungrouped behaves exactly as before.
+      const grouped = isGrouped(f)
+      const flatExpr = grouped
+        ? `${constName}.flatMap((g) => g.items)`
+        : constName
+      const itemsExpr = grouped
+        ? `${constName}.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))`
+        : `${constName}.map((o) => o.value)`
+
       const rootProps = f.multiple
         ? `multiple
-        items={${constName}.map((o) => o.value)}
+        items={${itemsExpr}}
         itemToStringLabel={(value) =>
-          ${constName}.find((o) => o.value === value)?.label ?? value
+          ${flatExpr}.find((o) => o.value === value)?.label ?? value
         }
         value={field.value ?? []}
         onValueChange={field.onChange}`
-        : `items={${constName}.map((o) => o.value)}
+        : `items={${itemsExpr}}
         itemToStringLabel={(value) =>
-          ${constName}.find((o) => o.value === value)?.label ?? value
+          ${flatExpr}.find((o) => o.value === value)?.label ?? value
         }
         value={field.value || null}
         onValueChange={(value) => field.onChange(value ?? "")}`
 
-      const list = `<ComboboxList>
+      const list = grouped
+        ? `<ComboboxList>
+          {(group, index) => (
+            <ComboboxGroup key={index} items={group.items}>
+              {index > 0 ? <ComboboxSeparator /> : null}
+              {group.label ? <ComboboxLabel>{group.label}</ComboboxLabel> : null}
+              <ComboboxCollection>
+                {(value) => {
+                  const option = ${flatExpr}.find((o) => o.value === value)
+                  return (
+                    <ComboboxItem key={value} value={value}>
+                      {option?.label ?? value}
+                    </ComboboxItem>
+                  )
+                }}
+              </ComboboxCollection>
+            </ComboboxGroup>
+          )}
+        </ComboboxList>`
+        : `<ComboboxList>
           {(value) => {
             const option = ${constName}.find((o) => o.value === value)
             return (
@@ -328,7 +370,7 @@ function generateFieldJSX(field: FormField): string {
             {(value: string[] | null) =>
               (value ?? []).map((v) => (
                 <ComboboxChip key={v}>
-                  {${constName}.find((o) => o.value === v)?.label ?? v}
+                  {${flatExpr}.find((o) => o.value === v)?.label ?? v}
                 </ComboboxChip>
               ))
             }
@@ -344,7 +386,7 @@ function generateFieldJSX(field: FormField): string {
       } else if (f.displayStyle === "trigger") {
         const triggerInner = f.multiple
           ? `{field.value && field.value.length > 0 ? \`\${field.value.length} selected\` : <span className="text-muted-foreground">${placeholderText}</span>}`
-          : `{field.value ? (${constName}.find((o) => o.value === field.value)?.label ?? field.value) : <span className="text-muted-foreground">${placeholderText}</span>}`
+          : `{field.value ? (${flatExpr}.find((o) => o.value === field.value)?.label ?? field.value) : <span className="text-muted-foreground">${placeholderText}</span>}`
         control = `<ComboboxTrigger id="${f.name}" aria-invalid={fieldState.invalid} className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs">
           <span className="truncate">
             ${triggerInner}

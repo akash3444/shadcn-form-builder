@@ -14,6 +14,7 @@ import {
   dateDefaultString,
   dateFnsImportsFor,
 } from "./validation-spec"
+import { isGroupableField, isGrouped, partitionByGroup } from "./utils"
 
 /**
  * Library-agnostic code-generation helpers shared between the React Hook Form
@@ -57,6 +58,34 @@ export function generateOptionsConst(
   field: SelectField | RadioGroupField | CheckboxGroupField | ComboboxField
 ): string {
   const constName = getOptionsConstName(field.name)
+
+  // Grouped select/combobox emit the nested `[{ label, items }]` shape. The
+  // inner key is `items` (not `options`) because base-ui detects grouping via
+  // `'items' in items[0]`; the label key is ours. See ADR 0001.
+  if (isGroupableField(field) && isGrouped(field)) {
+    const partitioned = partitionByGroup(field)
+    // A degenerate empty grouped field would emit `[]`, which TS infers as
+    // `any[]` and fails to compile downstream — annotate the empty case.
+    if (partitioned.length === 0) {
+      return `const ${constName}: { label: string; items: { label: string; value: string }[] }[] = []`
+    }
+    const groups = partitioned
+      .map((group) => {
+        const items = group.items
+          .map(
+            (o) =>
+              `      { label: ${jsString(o.label)}, value: ${jsString(o.value)} },`
+          )
+          .join("\n")
+        return `  {\n    label: ${jsString(group.label)},\n    items: [\n${items}\n    ],\n  },`
+      })
+      .join("\n")
+    return `const ${constName} = [\n${groups}\n]`
+  }
+
+  if (field.options.length === 0) {
+    return `const ${constName}: { label: string; value: string }[] = []`
+  }
   const rows = field.options
     .map((o) => `  { label: ${jsString(o.label)}, value: ${jsString(o.value)} },`)
     .join("\n")
@@ -169,10 +198,23 @@ export function buildImports(
     imports.push('import { Checkbox } from "@/components/ui/checkbox"')
   if (types.has("switch"))
     imports.push('import { Switch } from "@/components/ui/switch"')
-  if (types.has("select"))
-    imports.push(
-      'import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"'
+  if (types.has("select")) {
+    const selectGrouped = fields.some(
+      (f) => f.type === "select" && isGrouped(f)
     )
+    const selectParts = [
+      "Select",
+      "SelectContent",
+      ...(selectGrouped ? ["SelectGroup"] : []),
+      "SelectItem",
+      ...(selectGrouped ? ["SelectLabel", "SelectSeparator"] : []),
+      "SelectTrigger",
+      "SelectValue",
+    ]
+    imports.push(
+      `import { ${selectParts.join(", ")} } from "@/components/ui/select"`
+    )
+  }
   if (types.has("radio-group"))
     imports.push(
       'import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"'
@@ -201,6 +243,12 @@ export function buildImports(
         parts.add("ComboboxInput")
       }
       if (f.displayStyle === "trigger") parts.add("ComboboxTrigger")
+      if (isGrouped(f)) {
+        parts.add("ComboboxGroup")
+        parts.add("ComboboxLabel")
+        parts.add("ComboboxCollection")
+        parts.add("ComboboxSeparator")
+      }
     }
     const ordered = [
       "Combobox",
@@ -208,11 +256,15 @@ export function buildImports(
       "ComboboxChips",
       "ComboboxChipsInput",
       "ComboboxClear",
+      "ComboboxCollection",
       "ComboboxContent",
       "ComboboxEmpty",
+      "ComboboxGroup",
       "ComboboxInput",
       "ComboboxItem",
+      "ComboboxLabel",
       "ComboboxList",
+      "ComboboxSeparator",
       "ComboboxTrigger",
       "ComboboxValue",
     ].filter((p) => parts.has(p))

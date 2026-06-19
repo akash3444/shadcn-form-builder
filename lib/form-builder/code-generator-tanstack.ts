@@ -10,7 +10,7 @@ import type {
   ComboboxField,
   DateField,
 } from "./types"
-import { toPascalCase } from "./utils"
+import { toPascalCase, isGrouped } from "./utils"
 import { dateMatcherExprs } from "./validation-spec"
 import {
   indent,
@@ -168,6 +168,19 @@ ${bindings}
     case "select": {
       const f = field as SelectField
       const constName = getOptionsConstName(f.name)
+      const selectInner = isGrouped(f)
+        ? `{${constName}.map((group, i) => (
+        <SelectGroup key={i}>
+          {i > 0 ? <SelectSeparator /> : null}
+          {group.label ? <SelectLabel>{group.label}</SelectLabel> : null}
+          {group.items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+          ))}
+        </SelectGroup>
+      ))}`
+        : `{${constName}.map((o) => (
+        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+      ))}`
       return `<Field data-invalid={isInvalid}>
   <FieldLabel htmlFor="${f.name}">
     ${label}${reqSpan}
@@ -177,9 +190,7 @@ ${bindings}
       <SelectValue placeholder="${escapeJsxAttr(f.placeholder) || "Select an option"}" />
     </SelectTrigger>
     <SelectContent>
-      {${constName}.map((o) => (
-        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-      ))}
+      ${selectInner}
     </SelectContent>
   </Select>${descEl(field, "below-control")}${error}
 </Field>`
@@ -265,22 +276,51 @@ ${bindings}
       const searchPlaceholderAttr = escapeJsxAttr(f.searchPlaceholder || "Search...")
       const emptyTextText = escapeJsxText(f.emptyText || "No results found.")
 
+      // See ADR 0001 / the RHF generator: grouped combobox feeds base-ui
+      // grouped value-strings and resolves labels against the flattened list.
+      const grouped = isGrouped(f)
+      const flatExpr = grouped
+        ? `${constName}.flatMap((g) => g.items)`
+        : constName
+      const itemsExpr = grouped
+        ? `${constName}.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))`
+        : `${constName}.map((o) => o.value)`
+
       const rootProps = f.multiple
         ? `multiple
-    items={${constName}.map((o) => o.value)}
+    items={${itemsExpr}}
     itemToStringLabel={(value) =>
-      ${constName}.find((o) => o.value === value)?.label ?? value
+      ${flatExpr}.find((o) => o.value === value)?.label ?? value
     }
     value={field.state.value ?? []}
     onValueChange={field.handleChange}`
-        : `items={${constName}.map((o) => o.value)}
+        : `items={${itemsExpr}}
     itemToStringLabel={(value) =>
-      ${constName}.find((o) => o.value === value)?.label ?? value
+      ${flatExpr}.find((o) => o.value === value)?.label ?? value
     }
     value={field.state.value || null}
     onValueChange={(value) => field.handleChange(value ?? "")}`
 
-      const list = `<ComboboxList>
+      const list = grouped
+        ? `<ComboboxList>
+        {(group, index) => (
+          <ComboboxGroup key={index} items={group.items}>
+            {index > 0 ? <ComboboxSeparator /> : null}
+            {group.label ? <ComboboxLabel>{group.label}</ComboboxLabel> : null}
+            <ComboboxCollection>
+              {(value) => {
+                const option = ${flatExpr}.find((o) => o.value === value)
+                return (
+                  <ComboboxItem key={value} value={value}>
+                    {option?.label ?? value}
+                  </ComboboxItem>
+                )
+              }}
+            </ComboboxCollection>
+          </ComboboxGroup>
+        )}
+      </ComboboxList>`
+        : `<ComboboxList>
         {(value) => {
           const option = ${constName}.find((o) => o.value === value)
           return (
@@ -298,7 +338,7 @@ ${bindings}
         {(value: string[] | null) =>
           (value ?? []).map((v) => (
             <ComboboxChip key={v}>
-              {${constName}.find((o) => o.value === v)?.label ?? v}
+              {${flatExpr}.find((o) => o.value === v)?.label ?? v}
             </ComboboxChip>
           ))
         }
@@ -314,7 +354,7 @@ ${bindings}
       } else if (f.displayStyle === "trigger") {
         const triggerInner = f.multiple
           ? `{field.state.value && field.state.value.length > 0 ? \`\${field.state.value.length} selected\` : <span className="text-muted-foreground">${placeholderText}</span>}`
-          : `{field.state.value ? (${constName}.find((o) => o.value === field.state.value)?.label ?? field.state.value) : <span className="text-muted-foreground">${placeholderText}</span>}`
+          : `{field.state.value ? (${flatExpr}.find((o) => o.value === field.state.value)?.label ?? field.state.value) : <span className="text-muted-foreground">${placeholderText}</span>}`
         control = `<ComboboxTrigger id="${f.name}" aria-invalid={isInvalid} className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs">
       <span className="truncate">
         ${triggerInner}

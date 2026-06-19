@@ -11,6 +11,7 @@ import {
   FieldSet,
 } from "@/components/ui/field"
 import type { FormField, DateField } from "@/lib/form-builder/types"
+import { isGrouped, partitionByGroup } from "@/lib/form-builder/utils"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -30,7 +31,10 @@ import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -41,11 +45,15 @@ import {
   ComboboxChips,
   ComboboxChipsInput,
   ComboboxClear,
+  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxGroup,
   ComboboxInput,
   ComboboxItem,
+  ComboboxLabel,
   ComboboxList,
+  ComboboxSeparator,
   ComboboxTrigger,
   ComboboxValue,
 } from "@/components/ui/combobox"
@@ -281,7 +289,8 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
         </Field>
       )
 
-    case "select":
+    case "select": {
+      const selectGroups = isGrouped(field) ? partitionByGroup(field) : null
       return (
         <FieldWrapper
           label={field.label}
@@ -298,7 +307,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
               <Select
                 value={String(f.value ?? "")}
                 onValueChange={f.onChange}
-                items={field.options}
+                items={selectGroups ?? field.options}
               >
                 <SelectTrigger
                   id={field.name}
@@ -310,17 +319,32 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {selectGroups
+                    ? selectGroups.map((group, i) => (
+                        <SelectGroup key={group.id}>
+                          {i > 0 ? <SelectSeparator /> : null}
+                          {group.label ? (
+                            <SelectLabel>{group.label}</SelectLabel>
+                          ) : null}
+                          {group.items.map((opt) => (
+                            <SelectItem key={opt.id} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))
+                    : field.options.map((opt) => (
+                        <SelectItem key={opt.id} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                 </SelectContent>
               </Select>
             )}
           />
         </FieldWrapper>
       )
+    }
 
     case "radio-group":
       return (
@@ -466,7 +490,6 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
 
     case "combobox": {
       const opts = field.options
-      const values = opts.map((o) => o.value)
       const labelFor = (v: string) =>
         opts.find((o) => o.value === v)?.label ?? v
       const placeholder =
@@ -476,6 +499,43 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
       const searchPlaceholder = field.searchPlaceholder || "Search..."
       const triggerClass =
         "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
+
+      // Grouped: feed base-ui grouped value-strings and render group sections;
+      // flat: plain value strings. Shared across every display variant below.
+      const grouped = isGrouped(field)
+      const groups = grouped ? partitionByGroup(field) : []
+      const comboItems = grouped
+        ? groups.map((g) => ({
+            label: g.label,
+            items: g.items.map((o) => o.value),
+          }))
+        : opts.map((o) => o.value)
+      const comboList = grouped ? (
+        <ComboboxList>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(group: any, index: number) => (
+            <ComboboxGroup key={index} items={group.items}>
+              {index > 0 ? <ComboboxSeparator /> : null}
+              {group.label ? <ComboboxLabel>{group.label}</ComboboxLabel> : null}
+              <ComboboxCollection>
+                {(v: string) => (
+                  <ComboboxItem key={v} value={v}>
+                    {labelFor(v)}
+                  </ComboboxItem>
+                )}
+              </ComboboxCollection>
+            </ComboboxGroup>
+          )}
+        </ComboboxList>
+      ) : (
+        <ComboboxList>
+          {(v: string) => (
+            <ComboboxItem key={v} value={v}>
+              {labelFor(v)}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      )
 
       return (
         <FieldWrapper
@@ -496,7 +556,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                   return (
                     <Combobox
                       multiple
-                      items={values}
+                      items={comboItems as never}
                       itemToStringLabel={labelFor}
                       value={arr}
                       onValueChange={f.onChange}
@@ -517,13 +577,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                       </ComboboxChips>
                       <ComboboxContent>
                         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                        <ComboboxList>
-                          {(v: string) => (
-                            <ComboboxItem key={v} value={v}>
-                              {labelFor(v)}
-                            </ComboboxItem>
-                          )}
-                        </ComboboxList>
+                      {comboList}
                       </ComboboxContent>
                     </Combobox>
                   )
@@ -531,7 +585,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                 return (
                   <Combobox
                     multiple
-                    items={values}
+                    items={comboItems as never}
                     itemToStringLabel={labelFor}
                     value={arr}
                     onValueChange={f.onChange}
@@ -558,13 +612,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                         placeholder={searchPlaceholder}
                       />
                       <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                      <ComboboxList>
-                        {(v: string) => (
-                          <ComboboxItem key={v} value={v}>
-                            {labelFor(v)}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
+                      {comboList}
                     </ComboboxContent>
                   </Combobox>
                 )
@@ -574,7 +622,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
               if (field.displayStyle === "trigger") {
                 return (
                   <Combobox
-                    items={values}
+                    items={comboItems as never}
                     itemToStringLabel={labelFor}
                     value={single || null}
                     onValueChange={(v) => f.onChange(v ?? "")}
@@ -601,13 +649,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                         placeholder={searchPlaceholder}
                       />
                       <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                      <ComboboxList>
-                        {(v: string) => (
-                          <ComboboxItem key={v} value={v}>
-                            {labelFor(v)}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
+                      {comboList}
                     </ComboboxContent>
                   </Combobox>
                 )
@@ -615,7 +657,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
 
               return (
                 <Combobox
-                  items={values}
+                  items={comboItems as never}
                   itemToStringLabel={labelFor}
                   value={single || null}
                   onValueChange={(v) => f.onChange(v ?? "")}
@@ -628,13 +670,7 @@ export function PreviewField({ field, control, error }: PreviewFieldProps) {
                   />
                   <ComboboxContent>
                     <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                    <ComboboxList>
-                      {(v: string) => (
-                        <ComboboxItem key={v} value={v}>
-                          {labelFor(v)}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
+                      {comboList}
                   </ComboboxContent>
                 </Combobox>
               )

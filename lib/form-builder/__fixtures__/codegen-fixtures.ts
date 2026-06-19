@@ -45,8 +45,8 @@ export interface CodegenFixture {
 }
 
 let optionSeq = 0
-function opt(label: string, value: string): FieldOption {
-  return { id: `opt-${optionSeq++}`, label, value }
+function opt(label: string, value: string, groupId?: string): FieldOption {
+  return { id: `opt-${optionSeq++}`, label, value, ...(groupId ? { groupId } : {}) }
 }
 
 const baseDefaults = {
@@ -76,6 +76,22 @@ const sampleOptions = (): FieldOption[] => [
   opt("Two", "two"),
   opt("Three", "three"),
 ]
+
+// A grouped option set: two named groups plus a third blank-labeled group, so
+// the harness compiles the labeled-heading and unlabeled-section code paths.
+const groupedParts = (): { groups: SelectField["groups"]; options: FieldOption[] } => ({
+  groups: [
+    { id: "g1", label: "Group One" },
+    { id: "g2", label: "Group Two" },
+    { id: "g3", label: "" },
+  ],
+  options: [
+    { id: "go1", label: "One", value: "one", groupId: "g1" },
+    { id: "go2", label: "Two", value: "two", groupId: "g1" },
+    { id: "go3", label: "Three", value: "three", groupId: "g2" },
+    { id: "go4", label: "Four", value: "four", groupId: "g3" },
+  ],
+})
 function select(name: string, over: Partial<SelectField> = {}): SelectField {
   return { id: name, type: "select", label: name, name, options: sampleOptions(), ...baseDefaults, ...over }
 }
@@ -269,6 +285,39 @@ one("combobox-multiple-required", combobox("value", { multiple: true, displaySty
 one("combobox-single-default", combobox("value", { multiple: false, displayStyle: "trigger", defaultValue: "two" }))
 one("combobox-multiple-default", combobox("value", { multiple: true, displayStyle: "input", defaultValue: ["one", "two"] }))
 one("combobox-custom-text", combobox("value", { multiple: false, displayStyle: "input", searchPlaceholder: "Type to filter <fast>", emptyText: "Nothing & nada {0}" }))
+
+// Grouping (select & combobox) — exercises the nested `[{ label, items }]`
+// constant and the SelectGroup/ComboboxGroup render paths under every variant.
+one("select-grouped", select("value", groupedParts()))
+one("select-grouped-default", select("value", { ...groupedParts(), defaultValue: "three" }))
+one("combobox-grouped-trigger", combobox("value", { multiple: false, displayStyle: "trigger", ...groupedParts() }))
+one("combobox-grouped-input", combobox("value", { multiple: false, displayStyle: "input", ...groupedParts() }))
+one("combobox-grouped-multiple", combobox("value", { multiple: true, displayStyle: "input", ...groupedParts() }))
+// Edge cases: a single group; an empty group (must be dropped from output); a
+// fully empty grouped field (degenerate but must still compile); and a group
+// label needing escaping.
+one("select-grouped-single", select("value", {
+  groups: [{ id: "g1", label: "Only" }],
+  options: [opt("A", "a", "g1"), opt("B", "b", "g1")],
+}))
+one("select-grouped-empty-group", select("value", {
+  groups: [{ id: "g1", label: "Has Items" }, { id: "g2", label: "Empty" }],
+  options: [opt("A", "a", "g1"), opt("B", "b", "g1")],
+}))
+one("select-grouped-all-empty", select("value", {
+  groups: [{ id: "g1", label: "Empty" }],
+  options: [],
+}))
+one("select-grouped-escaping", select("value", {
+  groups: [{ id: "g1", label: 'Fruits & "Veg" <x> {0}' }],
+  options: [opt("Apple", "apple", "g1")],
+}))
+one("combobox-grouped-single", combobox("value", {
+  multiple: false,
+  displayStyle: "input",
+  groups: [{ id: "g1", label: "Only" }],
+  options: [opt("A", "a", "g1"), opt("B", "b", "g1")],
+}))
 
 // Date: single/range × required (drives the `z.date()` vs `z.object({from,to})`
 // schema branch and the Date-vs-DateRange binding), the matcher/disabled paths

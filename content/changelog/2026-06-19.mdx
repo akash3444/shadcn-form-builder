@@ -1,0 +1,15 @@
+---
+title: Grouped options for select & combobox
+description: Organize select and combobox choices under labeled groups, with drag-and-drop.
+---
+
+- **Option grouping** — turn on "Group options" for a select or combobox to
+  organize its choices under labeled headings. Leave a group name blank to get
+  an unlabeled divider between sections.
+- **Drag-and-drop** — reorder groups, reorder options within a group, and drag
+  options from one group to another. Add or delete groups inline; deleting a
+  group with options asks first.
+- **Clean generated code** — grouped fields emit a nested
+  `[{ label, items }]` constant and render with `SelectGroup`/`SelectLabel` or
+  `ComboboxGroup`, for both React Hook Form and TanStack Form. Ungrouped fields
+  are unchanged.

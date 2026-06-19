@@ -1,13 +1,21 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { arrayMove } from "@dnd-kit/sortable"
-import type { FormField, FieldType, FieldOption, FormLibrary } from "./types"
+import type {
+  FormField,
+  FieldType,
+  FieldOption,
+  OptionGroup,
+  FormLibrary,
+} from "./types"
 import { FORM_PRESETS, type FormPreset } from "./presets"
 import {
   labelToKey,
   generateId,
   uniqueName,
   isOptionField,
+  isGroupableField,
+  groupsOf,
   pruneDefault,
 } from "./utils"
 
@@ -29,9 +37,21 @@ interface FormBuilderActions {
   updateField: (id: string, updates: Partial<FormField>) => void
   reorderFields: (activeId: string, overId: string) => void
   selectField: (id: string | null) => void
-  addOption: (fieldId: string) => void
+  addOption: (fieldId: string, groupId?: string) => void
   updateOption: (fieldId: string, optionId: string, updates: Partial<FieldOption>) => void
   removeOption: (fieldId: string, optionId: string) => void
+  // Grouping (select & combobox only)
+  toggleGrouping: (fieldId: string) => void
+  addGroup: (fieldId: string) => void
+  updateGroup: (fieldId: string, groupId: string, updates: Partial<OptionGroup>) => void
+  removeGroup: (fieldId: string, groupId: string) => void
+  reorderGroups: (fieldId: string, activeId: string, overId: string) => void
+  moveOption: (
+    fieldId: string,
+    optionId: string,
+    toGroupId: string,
+    overOptionId?: string
+  ) => void
   clearForm: () => void
   loadPreset: (preset: FormPreset) => void
 }
@@ -205,24 +225,47 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
 
       selectField: (id) => set({ selectedFieldId: id }),
 
-      addOption: (fieldId) =>
+      // `groupId` targets a specific group when the field is grouped; omitted,
+      // a new option lands in the last group (grouped) or at the end (flat).
+      addOption: (fieldId, groupId) =>
         set((state) => ({
           fields: state.fields.map((f) => {
             if (f.id !== fieldId || !isOptionField(f)) return f
             const existingValues = new Set(f.options.map((o) => o.value))
             let n = f.options.length + 1
             while (existingValues.has(`option-${n}`)) n++
-            return {
-              ...f,
-              options: [
-                ...f.options,
-                {
-                  id: generateId(),
-                  label: `Option ${n}`,
-                  value: `option-${n}`,
-                },
-              ],
+
+            let targetGroupId = groupId
+            if (targetGroupId === undefined && isGroupableField(f)) {
+              const groups = groupsOf(f)
+              if (groups.length > 0) targetGroupId = groups[groups.length - 1].id
             }
+
+            const newOption: FieldOption = {
+              id: generateId(),
+              label: `Option ${n}`,
+              value: `option-${n}`,
+              ...(targetGroupId ? { groupId: targetGroupId } : {}),
+            }
+
+            // Insert right after the group's last option so it appears inside
+            // the right card; flat fields just append.
+            if (targetGroupId) {
+              const lastInGroup = f.options.reduce(
+                (acc, o, i) => (o.groupId === targetGroupId ? i : acc),
+                -1
+              )
+              const at = lastInGroup >= 0 ? lastInGroup + 1 : f.options.length
+              return {
+                ...f,
+                options: [
+                  ...f.options.slice(0, at),
+                  newOption,
+                  ...f.options.slice(at),
+                ],
+              }
+            }
+            return { ...f, options: [...f.options, newOption] }
           }),
         })),
 
@@ -260,6 +303,133 @@ export const useFormBuilderStore = create<FormBuilderStore>()(
               ...f,
               options: remainingOptions,
               defaultValue: pruneDefault(f.defaultValue, validValues),
+            }
+          }),
+        })),
+
+      // Turn grouping on: wrap every current option into one initial group.
+      // Turn it off: drop the groups and strip the groupId overlay, leaving the
+      // flat options untouched (lossless round-trip).
+      toggleGrouping: (fieldId) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            if (groupsOf(f).length > 0) {
+              return {
+                ...f,
+                groups: [],
+                options: f.options.map((o) => {
+                  const next = { ...o }
+                  delete next.groupId
+                  return next
+                }),
+              }
+            }
+            const group: OptionGroup = { id: generateId(), label: "Group 1" }
+            return {
+              ...f,
+              groups: [group],
+              options: f.options.map((o) => ({ ...o, groupId: group.id })),
+            }
+          }),
+        })),
+
+      addGroup: (fieldId) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            const groups = groupsOf(f)
+            return {
+              ...f,
+              groups: [
+                ...groups,
+                { id: generateId(), label: `Group ${groups.length + 1}` },
+              ],
+            }
+          }),
+        })),
+
+      updateGroup: (fieldId, groupId, updates) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            return {
+              ...f,
+              groups: groupsOf(f).map((g) =>
+                g.id === groupId ? { ...g, ...updates } : g
+              ),
+            }
+          }),
+        })),
+
+      // Removing a group removes its options too (confirmed in the UI). The last
+      // group can't be removed — flipping grouping off is the way back to flat.
+      removeGroup: (fieldId, groupId) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            const groups = groupsOf(f)
+            if (groups.length <= 1) return f
+            const remainingOptions = f.options.filter(
+              (o) => o.groupId !== groupId
+            )
+            const validValues = new Set(remainingOptions.map((o) => o.value))
+            return {
+              ...f,
+              groups: groups.filter((g) => g.id !== groupId),
+              options: remainingOptions,
+              defaultValue: pruneDefault(f.defaultValue, validValues),
+            }
+          }),
+        })),
+
+      reorderGroups: (fieldId, activeId, overId) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            const groups = groupsOf(f)
+            const oldIndex = groups.findIndex((g) => g.id === activeId)
+            const newIndex = groups.findIndex((g) => g.id === overId)
+            if (oldIndex < 0 || newIndex < 0) return f
+            return { ...f, groups: arrayMove(groups, oldIndex, newIndex) }
+          }),
+        })),
+
+      // Reassigns an option to `toGroupId` and repositions it in the flat array
+      // so its order within the target group matches the drop. Within-group
+      // reordering is the same call with an unchanged group. `overOptionId` is
+      // the option dropped onto; omitted, the option goes to the group's end.
+      //
+      // Uses `arrayMove` with the active/over indices in the FULL options array
+      // — the same computation dnd-kit's sorting strategy uses for the live drop
+      // preview — so where the row lands matches the gap shown while dragging.
+      moveOption: (fieldId, optionId, toGroupId, overOptionId) =>
+        set((state) => ({
+          fields: state.fields.map((f) => {
+            if (f.id !== fieldId || !isGroupableField(f)) return f
+            const activeIndex = f.options.findIndex((o) => o.id === optionId)
+            if (activeIndex < 0) return f
+
+            let targetIndex: number
+            if (overOptionId) {
+              targetIndex = f.options.findIndex((o) => o.id === overOptionId)
+              if (targetIndex < 0) targetIndex = f.options.length - 1
+            } else {
+              // Dropped on a group container → land at the end of that group.
+              targetIndex = f.options.reduce(
+                (acc, o, i) =>
+                  o.groupId === toGroupId && o.id !== optionId ? i : acc,
+                -1
+              )
+              if (targetIndex < 0) targetIndex = f.options.length - 1
+            }
+
+            const reordered = arrayMove(f.options, activeIndex, targetIndex)
+            return {
+              ...f,
+              options: reordered.map((o) =>
+                o.id === optionId ? { ...o, groupId: toGroupId } : o
+              ),
             }
           }),
         })),

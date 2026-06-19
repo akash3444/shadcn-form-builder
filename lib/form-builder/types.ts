@@ -20,6 +20,25 @@ export interface FieldOption {
   id: string
   label: string
   value: string
+  /**
+   * The {@link OptionGroup} this option belongs to, when its field has grouping
+   * enabled. Absent on ungrouped fields (and on radio/checkbox-group, which
+   * never surface grouping). Options are always stored as a flat list; this id
+   * is the overlay that codegen/preview partition by — see
+   * `docs/adr/0001-option-grouping-flat-storage-nested-output.md`.
+   */
+  groupId?: string
+}
+
+/**
+ * A named partition of a field's options. Only `select` and `combobox` carry
+ * groups. An empty `groups` array means grouping is off and the field renders
+ * as a flat list, exactly as before. A blank `label` renders an unlabeled
+ * section (a divider with no heading).
+ */
+export interface OptionGroup {
+  id: string
+  label: string
 }
 
 /**
@@ -89,6 +108,12 @@ export interface SwitchField extends BaseField {
 export interface SelectField extends BaseField {
   type: "select"
   options: FieldOption[]
+  /**
+   * Option groups. Absent or empty means grouping is off (flat list). Optional
+   * so state persisted before this feature rehydrates cleanly — treat a missing
+   * value as `[]` (see `groupsOf` in utils).
+   */
+  groups?: OptionGroup[]
 }
 
 export type GroupOrientation = "vertical" | "horizontal"
@@ -119,6 +144,8 @@ export type ComboboxDisplayStyle = "trigger" | "input"
 export interface ComboboxField extends BaseField {
   type: "combobox"
   options: FieldOption[]
+  /** See {@link SelectField.groups}. */
+  groups?: OptionGroup[]
   multiple: boolean
   displayStyle: ComboboxDisplayStyle
   searchPlaceholder: string
@@ -162,3 +189,6 @@ export type OptionField =
   | RadioGroupField
   | CheckboxGroupField
   | ComboboxField
+
+/** Option fields that support organizing their options into {@link OptionGroup}s. */
+export type GroupableField = SelectField | ComboboxField
