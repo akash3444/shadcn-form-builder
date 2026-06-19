@@ -34,8 +34,8 @@ import {
   isGroupableField,
   isGrouped,
   partitionByGroup,
-  slugify,
 } from "@/lib/form-builder/utils"
+import slugify from "@/lib/slugify"
 import { GroupedOptionsEditor } from "./grouped-options-editor"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -821,7 +821,7 @@ export function OptionsSection({ field }: { field: FormField }) {
               onChange={(e) =>
                 updateOption(field.id, option.id, {
                   label: e.target.value,
-                  value: slugify(e.target.value),
+                  value: slugify(e.target.value, { lower: true, strict: true }),
                 })
               }
               placeholder="Option label"

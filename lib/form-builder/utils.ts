@@ -72,14 +72,6 @@ export function pruneDefault(
   return defaultValue
 }
 
-/** "Hello World!" → "hello-world" — a URL-safe option value derived from a label. */
-export function slugify(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-}
-
 /** "First Name" → "firstName" */
 export function labelToKey(label: string): string {
   const words = label

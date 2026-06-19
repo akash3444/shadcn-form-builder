@@ -22,7 +22,8 @@ import { CSS } from "@dnd-kit/utilities"
 import { GripVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import type { FieldOption, GroupableField } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
-import { groupsOf, slugify } from "@/lib/form-builder/utils"
+import { groupsOf } from "@/lib/form-builder/utils"
+import slugify from "@/lib/slugify"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,7 +59,7 @@ function OptionInputs({
         onChange={(e) =>
           updateOption(fieldId, option.id, {
             label: e.target.value,
-            value: slugify(e.target.value),
+            value: slugify(e.target.value, { lower: true, strict: true }),
           })
         }
         placeholder="Option label"
