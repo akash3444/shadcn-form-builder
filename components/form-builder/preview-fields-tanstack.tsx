@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/field"
 import type { FormField, DateField } from "@/lib/form-builder/types"
 import { isGrouped, partitionByGroup } from "@/lib/form-builder/utils"
+import {
+  comboboxItems,
+  ComboboxOptions,
+  SelectOptions,
+} from "./preview-option-renderers"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -31,10 +36,6 @@ import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -45,15 +46,9 @@ import {
   ComboboxChips,
   ComboboxChipsInput,
   ComboboxClear,
-  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxGroup,
   ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxSeparator,
   ComboboxTrigger,
   ComboboxValue,
 } from "@/components/ui/combobox"
@@ -291,25 +286,7 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
               />
             </SelectTrigger>
             <SelectContent>
-              {selectGroups
-                ? selectGroups.map((group, i) => (
-                    <SelectGroup key={group.id}>
-                      {i > 0 ? <SelectSeparator /> : null}
-                      {group.label ? (
-                        <SelectLabel>{group.label}</SelectLabel>
-                      ) : null}
-                      {group.items.map((opt) => (
-                        <SelectItem key={opt.id} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))
-                : field.options.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+              <SelectOptions groups={selectGroups} options={field.options} />
             </SelectContent>
           </Select>
         </FieldWrapper>
@@ -450,41 +427,10 @@ export function TanstackPreviewField({ field, api }: TanstackPreviewFieldProps) 
       const triggerClass =
         "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
 
-      // Grouped: feed base-ui grouped value-strings and render group sections;
-      // flat: plain value strings. Shared across every display variant below.
-      const grouped = isGrouped(field)
-      const groups = grouped ? partitionByGroup(field) : []
-      const comboItems = grouped
-        ? groups.map((g) => ({
-            label: g.label,
-            items: g.items.map((o) => o.value),
-          }))
-        : opts.map((o) => o.value)
-      const comboList = grouped ? (
-        <ComboboxList>
-          {(group: { label: string; items: string[] }, index: number) => (
-            <ComboboxGroup key={index} items={group.items}>
-              {index > 0 ? <ComboboxSeparator /> : null}
-              {group.label ? <ComboboxLabel>{group.label}</ComboboxLabel> : null}
-              <ComboboxCollection>
-                {(v: string) => (
-                  <ComboboxItem key={v} value={v}>
-                    {labelFor(v)}
-                  </ComboboxItem>
-                )}
-              </ComboboxCollection>
-            </ComboboxGroup>
-          )}
-        </ComboboxList>
-      ) : (
-        <ComboboxList>
-          {(v: string) => (
-            <ComboboxItem key={v} value={v}>
-              {labelFor(v)}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      )
+      // Shared across every display variant below. See ADR 0001 for the
+      // grouped value-string shape base-ui's combobox expects.
+      const comboItems = comboboxItems(field)
+      const comboList = <ComboboxOptions field={field} labelFor={labelFor} />
 
       let control: React.ReactNode
       if (field.multiple) {
