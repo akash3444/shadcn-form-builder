@@ -68,7 +68,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
         {/* Drag handle */}
         <button
           type="button"
-          className="shrink-0 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+          className="hit-area-y-5 hit-area-l-3 hit-area-r-2 shrink-0 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder"

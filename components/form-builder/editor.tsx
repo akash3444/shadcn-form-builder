@@ -83,7 +83,7 @@ export function FieldEditor() {
           <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" />
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="space-y-2 px-4 pb-3">
+          <div className="space-y-2 px-4 pt-0.75 pb-3">
             <div className="grid grid-cols-[80px_1fr] items-center gap-2">
               <label
                 htmlFor="form-name"
