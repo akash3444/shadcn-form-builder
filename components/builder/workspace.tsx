@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 
-import { FieldPalette } from "@/components/builder/palette"
-import { FieldEditor } from "@/components/builder/editor"
-import { FormPreview } from "@/components/builder/preview"
+import { FieldPalette } from "@/components/builder/palette/palette"
+import { FieldEditor } from "@/components/builder/editor/editor"
+import { FormPreview } from "@/components/builder/preview/preview"
 import { cn } from "@/lib/utils"
 
 export function BuilderWorkspace() {

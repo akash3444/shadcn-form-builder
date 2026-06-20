@@ -6,9 +6,9 @@ import { BlocksIcon, EyeIcon } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { BuilderProvider } from "./builder-context"
-import { FieldEditor } from "./editor"
-import { FieldPalette } from "./palette"
-import { FormPreview } from "./preview"
+import { FieldEditor } from "./editor/editor"
+import { FieldPalette } from "./palette/palette"
+import { FormPreview } from "./preview/preview"
 
 const subscribeNoop = () => () => {}
 

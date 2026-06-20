@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip"
 import { PALETTE_CATEGORIES } from "@/config/field"
 import { cn } from "@/lib/utils"
-import { FieldPaletteItem } from "@/components/builder/palette-item"
+import { FieldPaletteItem } from "@/components/builder/palette/palette-item"
 
 interface FieldPaletteProps {
   collapsed?: boolean

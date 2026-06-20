@@ -8,7 +8,7 @@ import type {
 } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { labelToKey } from "@/lib/form-builder/utils"
-import { useBuilderContext } from "./builder-context"
+import { useBuilderContext } from "../builder-context"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {

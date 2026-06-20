@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { FIELD_ICONS, FIELD_LABELS } from "@/config/field"
-import { ScrollArea } from "../ui/scroll-area"
+import { ScrollArea } from "../../ui/scroll-area"
 
 interface FieldConfigDialogProps {
   field: FormField

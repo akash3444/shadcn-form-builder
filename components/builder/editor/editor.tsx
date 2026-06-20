@@ -33,7 +33,7 @@ import {
 import { ChevronDownIcon, LayoutTemplateIcon } from "lucide-react"
 import { FieldItem } from "./field-item"
 import { PresetsPanel } from "./presets-panel"
-import { Button } from "../ui/button"
+import { Button } from "../../ui/button"
 
 export function FieldEditor() {
   const formName = useFormBuilderStore((s) => s.formName)

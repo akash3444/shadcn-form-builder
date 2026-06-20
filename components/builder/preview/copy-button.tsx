@@ -28,17 +28,8 @@ export function CopyButton({ code, ...props }: CopyButtonProps) {
       }}
       {...props}
     >
-      {isCopied ? (
-        <>
-          <CheckIcon className="text-green-500" />
-          Copied!
-        </>
-      ) : (
-        <>
-          <CopyIcon />
-          Copy code
-        </>
-      )}
+      {isCopied ? <CheckIcon className="text-green-500" /> : <CopyIcon />}
+      {isCopied ? "Copied!" : "Copy code"}
     </Button>
   )
 }
