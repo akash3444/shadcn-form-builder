@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import {
@@ -8,10 +9,12 @@ import {
   ChevronDownIcon,
   EyeIcon,
   EyeOffIcon,
+  Maximize2Icon,
 } from "lucide-react"
 import type { FormField } from "@/lib/form-builder/types"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
 import { FieldConfig } from "./field-config"
+import { FieldConfigDialog } from "./field-config-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -29,6 +32,8 @@ interface FieldItemProps {
 export function FieldItem({ field, isSelected }: FieldItemProps) {
   const { selectField, removeField, toggleFieldVisibility } =
     useFormBuilderStore()
+
+  const [expanded, setExpanded] = useState(false)
 
   const {
     attributes,
@@ -107,8 +112,28 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
                   type="button"
                   variant="ghost"
                   size="icon-xs"
+                  onClick={() => setExpanded(true)}
+                  className="hit-area-x-0.75 hit-area-y-4 text-muted-foreground"
+                  aria-label="Expand field"
+                />
+              }
+            >
+              <Maximize2Icon />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Expand for more space</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              delay={300}
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => toggleFieldVisibility(field.id)}
-                  className="hit-area-x-1 hit-area-y-2 text-muted-foreground"
+                  className="hit-area-x-1 hit-area-y-4 text-muted-foreground"
                   aria-label={isHidden ? "Show field" : "Hide field"}
                 />
               }
@@ -132,7 +157,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => removeField(field.id)}
-                  className="hit-area-x-0.75 hit-area-y-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="hit-area-x-0.75 hit-area-y-4 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   aria-label="Remove field"
                 />
               }
@@ -150,7 +175,7 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
             onClick={() => selectField(isSelected ? null : field.id)}
             aria-expanded={isSelected}
             aria-label={isSelected ? "Collapse field" : "Expand field"}
-            className="hit-area-x-0.75 hit-area-y-2 text-muted-foreground"
+            className="hit-area-x-0.75 hit-area-y-4 text-muted-foreground"
           >
             <ChevronDownIcon
               className={cn("transition-transform", isSelected && "rotate-180")}
@@ -165,6 +190,12 @@ export function FieldItem({ field, isSelected }: FieldItemProps) {
           <FieldConfig key={field.id} field={field} />
         </div>
       )}
+
+      <FieldConfigDialog
+        field={field}
+        open={expanded}
+        onClose={() => setExpanded(false)}
+      />
     </div>
   )
 }
