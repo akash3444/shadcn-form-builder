@@ -87,6 +87,40 @@ export function SwitchRow({
   )
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+      {children}
+    </p>
+  )
+}
+
+function LabeledColumn({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string
+  htmlFor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-1">
+      <label htmlFor={htmlFor} className="text-[11px] text-muted-foreground">
+        {label}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+/** Parse a numeric input's raw value, treating blank/NaN as cleared. */
+function parseNumberValue(raw: string): number | undefined {
+  if (raw === "") return undefined
+  const n = Number(raw)
+  return isNaN(n) ? undefined : n
+}
+
 function MultiSelectCombobox({
   options,
   value,
@@ -170,9 +204,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Default Value
-        </p>
+        <SectionHeading>Default Value</SectionHeading>
         {field.defaultValue !== undefined && (
           <button
             type="button"
@@ -189,6 +221,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
         (field.type === "input" &&
           ["text", "email", "url", "tel"].includes(field.inputType))) && (
         <Input
+          type={field.type === "input" ? field.inputType : "text"}
           value={(field.defaultValue as string | undefined) ?? ""}
           onChange={(e) =>
             updateField(field.id, {
@@ -196,12 +229,6 @@ export function DefaultValueSection({ field }: { field: FormField }) {
             })
           }
           placeholder="Enter default value"
-          type={
-            field.type === "input" &&
-            ["email", "url", "tel"].includes(field.inputType)
-              ? field.inputType
-              : "text"
-          }
           className="h-7 text-xs"
         />
       )}
@@ -211,13 +238,11 @@ export function DefaultValueSection({ field }: { field: FormField }) {
         <Input
           type="number"
           value={(field.defaultValue as number | undefined) ?? ""}
-          onChange={(e) => {
-            const raw = Number(e.target.value)
+          onChange={(e) =>
             updateField(field.id, {
-              defaultValue:
-                e.target.value === "" || isNaN(raw) ? undefined : raw,
+              defaultValue: parseNumberValue(e.target.value),
             })
-          }}
+          }
           placeholder="Enter default value"
           className="h-7 text-xs"
         />
@@ -367,10 +392,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
           }
           return (
             <div className="flex gap-2">
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-[11px] text-muted-foreground">
-                  From
-                </label>
+              <LabeledColumn label="From">
                 <Input
                   type="date"
                   value={r.from ?? ""}
@@ -381,9 +403,8 @@ export function DefaultValueSection({ field }: { field: FormField }) {
                   }
                   className="h-7 text-xs"
                 />
-              </div>
-              <div className="flex flex-1 flex-col gap-1">
-                <label className="text-[11px] text-muted-foreground">To</label>
+              </LabeledColumn>
+              <LabeledColumn label="To">
                 <Input
                   type="date"
                   value={r.to ?? ""}
@@ -394,7 +415,7 @@ export function DefaultValueSection({ field }: { field: FormField }) {
                   }
                   className="h-7 text-xs"
                 />
-              </div>
+              </LabeledColumn>
             </div>
           )
         })()}
@@ -484,17 +505,9 @@ export function SliderRangeSection({ field }: { field: FormField }) {
 
   return (
     <div className="space-y-2.5">
-      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Range
-      </p>
+      <SectionHeading>Range</SectionHeading>
       <div className="flex gap-2">
-        <div className="flex flex-1 flex-col gap-1">
-          <label
-            htmlFor={`min-${field.id}`}
-            className="text-[11px] text-muted-foreground"
-          >
-            Min
-          </label>
+        <LabeledColumn label="Min" htmlFor={`min-${field.id}`}>
           <Input
             id={`min-${field.id}`}
             type="number"
@@ -505,14 +518,8 @@ export function SliderRangeSection({ field }: { field: FormField }) {
             }}
             className="h-7 text-xs"
           />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label
-            htmlFor={`max-${field.id}`}
-            className="text-[11px] text-muted-foreground"
-          >
-            Max
-          </label>
+        </LabeledColumn>
+        <LabeledColumn label="Max" htmlFor={`max-${field.id}`}>
           <Input
             id={`max-${field.id}`}
             type="number"
@@ -523,14 +530,8 @@ export function SliderRangeSection({ field }: { field: FormField }) {
             }}
             className="h-7 text-xs"
           />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label
-            htmlFor={`step-${field.id}`}
-            className="text-[11px] text-muted-foreground"
-          >
-            Step
-          </label>
+        </LabeledColumn>
+        <LabeledColumn label="Step" htmlFor={`step-${field.id}`}>
           <Input
             id={`step-${field.id}`}
             type="number"
@@ -542,7 +543,7 @@ export function SliderRangeSection({ field }: { field: FormField }) {
             }}
             className="h-7 text-xs"
           />
-        </div>
+        </LabeledColumn>
       </div>
     </div>
   )
@@ -558,9 +559,7 @@ export function DateSettingsSection({ field }: { field: FormField }) {
 
   return (
     <div className="space-y-2.5">
-      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Date
-      </p>
+      <SectionHeading>Date</SectionHeading>
 
       <LabeledRow label="Mode">
         <Tabs
@@ -606,13 +605,7 @@ export function DateSettingsSection({ field }: { field: FormField }) {
       />
 
       <div className="flex gap-2">
-        <div className="flex flex-1 flex-col gap-1">
-          <label
-            htmlFor={`min-date-${field.id}`}
-            className="text-[11px] text-muted-foreground"
-          >
-            Min date
-          </label>
+        <LabeledColumn label="Min date" htmlFor={`min-date-${field.id}`}>
           <Input
             id={`min-date-${field.id}`}
             type="date"
@@ -623,14 +616,8 @@ export function DateSettingsSection({ field }: { field: FormField }) {
             }
             className="h-7 text-xs"
           />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label
-            htmlFor={`max-date-${field.id}`}
-            className="text-[11px] text-muted-foreground"
-          >
-            Max date
-          </label>
+        </LabeledColumn>
+        <LabeledColumn label="Max date" htmlFor={`max-date-${field.id}`}>
           <Input
             id={`max-date-${field.id}`}
             type="date"
@@ -641,7 +628,7 @@ export function DateSettingsSection({ field }: { field: FormField }) {
             }
             className="h-7 text-xs"
           />
-        </div>
+        </LabeledColumn>
       </div>
     </div>
   )
@@ -700,9 +687,7 @@ export function ValidationSection({ field }: { field: FormField }) {
 
   return (
     <div className="space-y-2.5">
-      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Validation
-      </p>
+      <SectionHeading>Validation</SectionHeading>
 
       <SwitchRow
         label="Required"
@@ -713,13 +698,10 @@ export function ValidationSection({ field }: { field: FormField }) {
       {(showNumberValidation || showStringValidation) && (
         <div className="space-y-1">
           <div className="flex gap-2">
-            <div className="flex flex-1 flex-col gap-1">
-              <label
-                htmlFor={`val-min-${field.id}`}
-                className="text-[11px] text-muted-foreground"
-              >
-                Min {showNumberValidation ? "value" : "length"}
-              </label>
+            <LabeledColumn
+              label={`Min ${showNumberValidation ? "value" : "length"}`}
+              htmlFor={`val-min-${field.id}`}
+            >
               <Input
                 id={`val-min-${field.id}`}
                 type="number"
@@ -731,22 +713,17 @@ export function ValidationSection({ field }: { field: FormField }) {
                 }
                 placeholder="–"
                 onChange={(e) => {
-                  const raw = Number(e.target.value)
-                  const v =
-                    e.target.value === "" || isNaN(raw) ? undefined : raw
+                  const v = parseNumberValue(e.target.value)
                   if (showNumberValidation) patchNumVal({ min: v })
                   else patchStrVal({ minLength: v })
                 }}
                 className="h-7 text-xs"
               />
-            </div>
-            <div className="flex flex-1 flex-col gap-1">
-              <label
-                htmlFor={`val-max-${field.id}`}
-                className="text-[11px] text-muted-foreground"
-              >
-                Max {showNumberValidation ? "value" : "length"}
-              </label>
+            </LabeledColumn>
+            <LabeledColumn
+              label={`Max ${showNumberValidation ? "value" : "length"}`}
+              htmlFor={`val-max-${field.id}`}
+            >
               <Input
                 id={`val-max-${field.id}`}
                 type="number"
@@ -758,15 +735,13 @@ export function ValidationSection({ field }: { field: FormField }) {
                 }
                 placeholder="–"
                 onChange={(e) => {
-                  const raw = Number(e.target.value)
-                  const v =
-                    e.target.value === "" || isNaN(raw) ? undefined : raw
+                  const v = parseNumberValue(e.target.value)
                   if (showNumberValidation) patchNumVal({ max: v })
                   else patchStrVal({ maxLength: v })
                 }}
                 className="h-7 text-xs"
               />
-            </div>
+            </LabeledColumn>
           </div>
           {(numError || strError) && (
             <p className="text-xs text-destructive">{numError || strError}</p>
@@ -794,9 +769,7 @@ export function OptionsSection({ field }: { field: FormField }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Options
-        </p>
+        <SectionHeading>Options</SectionHeading>
         {groupable && (
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             Group options
