@@ -2,12 +2,13 @@ import type { SchemaLibrary } from "../types"
 import type { SchemaEmitter } from "./types"
 import { zodEmitter } from "./zod"
 import { valibotEmitter } from "./valibot"
+import { arktypeEmitter } from "./arktype"
 
-// One emitter per Schema Library. Libraries without an emitter yet fall back to
-// Zod via getEmitter, so the registry can grow one phase at a time.
-const EMITTERS: Partial<Record<SchemaLibrary, SchemaEmitter>> = {
+// One emitter per Schema Library.
+const EMITTERS: Record<SchemaLibrary, SchemaEmitter> = {
   zod: zodEmitter,
   valibot: valibotEmitter,
+  arktype: arktypeEmitter,
 }
 
 export function getEmitter(library: SchemaLibrary): SchemaEmitter {

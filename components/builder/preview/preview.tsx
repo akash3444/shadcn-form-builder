@@ -3,7 +3,7 @@
 import posthog from "posthog-js"
 import { useMemo, useState, type SVGProps } from "react"
 import { Code2, Eye, RotateCcwIcon } from "lucide-react"
-import { ReactHookForm, TanStack } from "@/components/icons"
+import { ReactHookForm, TanStack, Zod, Valibot, ArkType } from "@/components/icons"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
-import type { FormLibrary } from "@/lib/form-builder/types"
+import type { FormLibrary, SchemaLibrary } from "@/lib/form-builder/types"
 import { CodePanel } from "./code-panel"
 import { PreviewForm } from "./preview-form"
 
@@ -40,6 +40,16 @@ const FORM_LIBRARY_OPTIONS: {
   },
 ]
 
+const SCHEMA_LIBRARY_OPTIONS: {
+  label: string
+  value: SchemaLibrary
+  icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement
+}[] = [
+  { label: "Zod", value: "zod", icon: Zod },
+  { label: "Valibot", value: "valibot", icon: Valibot },
+  { label: "ArkType", value: "arktype", icon: ArkType },
+]
+
 function LibraryLogo({
   icon: Icon,
 }: {
@@ -54,8 +64,13 @@ export function FormPreview() {
   const fields = useFormBuilderStore((s) => s.fields)
   const formLibrary = useFormBuilderStore((s) => s.formLibrary)
   const setFormLibrary = useFormBuilderStore((s) => s.setFormLibrary)
+  const schemaLibrary = useFormBuilderStore((s) => s.schemaLibrary)
+  const setSchemaLibrary = useFormBuilderStore((s) => s.setSchemaLibrary)
   const currentLibrary = FORM_LIBRARY_OPTIONS.find(
     (o) => o.value === formLibrary
+  )
+  const currentSchema = SCHEMA_LIBRARY_OPTIONS.find(
+    (o) => o.value === schemaLibrary
   )
   // Hidden fields stay in the builder but are excluded from both the rendered
   // preview and the generated code
@@ -131,6 +146,31 @@ export function FormPreview() {
             </SelectTrigger>
             <SelectContent>
               {FORM_LIBRARY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <LibraryLogo icon={option.icon} />
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={schemaLibrary}
+            onValueChange={(value) => {
+              posthog.capture("schema_library_switched", {
+                from_library: schemaLibrary,
+                to_library: value,
+              })
+              setSchemaLibrary(value as SchemaLibrary)
+            }}
+            items={SCHEMA_LIBRARY_OPTIONS}
+          >
+            <SelectTrigger size="sm" className="w-36">
+              {currentSchema && <LibraryLogo icon={currentSchema.icon} />}
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SCHEMA_LIBRARY_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   <LibraryLogo icon={option.icon} />
                   {option.label}

@@ -29,8 +29,7 @@ import type { FormLibrary, SchemaLibrary } from "../lib/form-builder/types"
 const ROOT = process.cwd()
 const VIRTUAL_DIR = path.join(ROOT, ".codegen-virtual")
 const LIBRARIES: FormLibrary[] = ["react-hook-form", "tanstack-form"]
-// Schema libraries grow one phase at a time as their emitters land.
-const SCHEMA_LIBRARIES: SchemaLibrary[] = ["zod", "valibot"]
+const SCHEMA_LIBRARIES: SchemaLibrary[] = ["zod", "valibot", "arktype"]
 
 const args = process.argv.slice(2)
 const shouldWrite = args.includes("--write")

@@ -438,6 +438,36 @@ const Zod = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+// Valibot and ArkType don't ship a widely-distributed single-path mark, so
+// these are clean monograms (rounded square + letterform) in each project's
+// accent color — recognizable next to the brand logos without claiming to be
+// the official artwork. Swap for official assets if/when published.
+const Valibot = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none">
+    <rect x="2" y="2" width="20" height="20" rx="5.5" fill="#0F9488" />
+    <path
+      d="M7.5 7.5 12 16.5l4.5-9"
+      stroke="#fff"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const ArkType = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none">
+    <rect x="2" y="2" width="20" height="20" rx="5.5" fill="#0F172A" />
+    <path
+      d="M6.8 17 12 6.5 17.2 17M9 13.2h6"
+      stroke="#38BDF8"
+      strokeWidth="2.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 const TypeScript = (props: SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 256 256" preserveAspectRatio="xMidYMid">
     <path
@@ -496,4 +526,13 @@ const GitHub = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-export { TanStack, Zod, TypeScript, ShadcnUi, ReactHookForm, GitHub }
+export {
+  TanStack,
+  Zod,
+  Valibot,
+  ArkType,
+  TypeScript,
+  ShadcnUi,
+  ReactHookForm,
+  GitHub,
+}
