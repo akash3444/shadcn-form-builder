@@ -4,6 +4,7 @@ import type {
   RadioGroupField,
   CheckboxGroupField,
   ComboboxField,
+  GroupOrientation,
 } from "./types"
 import {
   fieldSchemaSpec,
@@ -147,6 +148,45 @@ export function descEl(
   return description && descriptionPosition === pos
     ? `\n  <FieldDescription>${escapeJsxText(description)}</FieldDescription>`
     : ""
+}
+
+/** The flex layout class for a horizontally/vertically arranged option group. */
+export function groupLayoutClass(orientation: GroupOrientation): string {
+  return orientation === "horizontal"
+    ? "flex flex-row flex-wrap gap-3"
+    : "flex flex-col gap-3"
+}
+
+/**
+ * The library-independent codegen inputs for a combobox field: its options
+ * const name, resolved/escaped placeholder + empty text, and the base-ui
+ * `items`/flattened-value expressions. Both generators consume these verbatim;
+ * only the binding wrapper around the control differs per library.
+ *
+ * When grouped, base-ui needs grouped value-strings (`{ label, items }` where
+ * items are the option values) so the committed value stays a string; labels
+ * are resolved against the flattened option list. Ungrouped passes plain values.
+ */
+export function comboboxCodegenParts(f: ComboboxField) {
+  const constName = getOptionsConstName(f.name)
+  const placeholderRaw =
+    f.placeholder || (f.multiple ? "Select options" : "Select an option")
+  const grouped = isGrouped(f)
+  const flatExpr = grouped ? `${constName}.flatMap((g) => g.items)` : constName
+  const itemsExpr = grouped
+    ? `${constName}.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))`
+    : `${constName}.map((o) => o.value)`
+  return {
+    constName,
+    placeholderRaw,
+    placeholderAttr: escapeJsxAttr(placeholderRaw),
+    placeholderText: escapeJsxText(placeholderRaw),
+    searchPlaceholderAttr: escapeJsxAttr(f.searchPlaceholder || "Search..."),
+    emptyTextText: escapeJsxText(f.emptyText || "No results found."),
+    grouped,
+    flatExpr,
+    itemsExpr,
+  }
 }
 
 /**

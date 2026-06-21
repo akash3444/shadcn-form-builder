@@ -22,6 +22,8 @@ import {
   requiredSpan,
   descEl,
   jsString,
+  groupLayoutClass,
+  comboboxCodegenParts,
   buildImports,
   buildOptionsSection,
   buildSchemaBlock,
@@ -199,9 +201,7 @@ ${bindings}
     case "radio-group": {
       const f = field as RadioGroupField
       const constName = getOptionsConstName(f.name)
-      const layoutClass = f.orientation === "horizontal"
-        ? "flex flex-row flex-wrap gap-3"
-        : "flex flex-col gap-3"
+      const layoutClass = groupLayoutClass(f.orientation)
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${reqSpan}
@@ -220,9 +220,7 @@ ${bindings}
     case "checkbox-group": {
       const f = field as CheckboxGroupField
       const constName = getOptionsConstName(f.name)
-      const layoutClass = f.orientation === "horizontal"
-        ? "flex flex-row flex-wrap gap-3"
-        : "flex flex-col gap-3"
+      const layoutClass = groupLayoutClass(f.orientation)
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${reqSpan}
@@ -268,23 +266,16 @@ ${bindings}
 
     case "combobox": {
       const f = field as ComboboxField
-      const constName = getOptionsConstName(f.name)
-      const placeholderRaw =
-        f.placeholder || (f.multiple ? "Select options" : "Select an option")
-      const placeholderAttr = escapeJsxAttr(placeholderRaw)
-      const placeholderText = escapeJsxText(placeholderRaw)
-      const searchPlaceholderAttr = escapeJsxAttr(f.searchPlaceholder || "Search...")
-      const emptyTextText = escapeJsxText(f.emptyText || "No results found.")
-
-      // Mirrors the RHF generator: grouped combobox feeds base-ui grouped
-      // value-strings and resolves labels against the flattened list.
-      const grouped = isGrouped(f)
-      const flatExpr = grouped
-        ? `${constName}.flatMap((g) => g.items)`
-        : constName
-      const itemsExpr = grouped
-        ? `${constName}.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))`
-        : `${constName}.map((o) => o.value)`
+      const {
+        constName,
+        placeholderAttr,
+        placeholderText,
+        searchPlaceholderAttr,
+        emptyTextText,
+        grouped,
+        flatExpr,
+        itemsExpr,
+      } = comboboxCodegenParts(f)
 
       const rootProps = f.multiple
         ? `multiple

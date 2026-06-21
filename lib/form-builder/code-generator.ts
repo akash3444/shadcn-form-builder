@@ -23,6 +23,8 @@ import {
   requiredSpan,
   descEl,
   jsString,
+  groupLayoutClass,
+  comboboxCodegenParts,
   buildImports,
   buildOptionsSection,
   buildSchemaBlock,
@@ -205,9 +207,7 @@ function generateFieldJSX(field: FormField): string {
     case "radio-group": {
       const f = field as RadioGroupField
       const constName = getOptionsConstName(f.name)
-      const layoutClass = f.orientation === "horizontal"
-        ? "flex flex-row flex-wrap gap-3"
-        : "flex flex-col gap-3"
+      const layoutClass = groupLayoutClass(f.orientation)
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${reqSpan}
@@ -233,9 +233,7 @@ function generateFieldJSX(field: FormField): string {
     case "checkbox-group": {
       const f = field as CheckboxGroupField
       const constName = getOptionsConstName(f.name)
-      const layoutClass = f.orientation === "horizontal"
-        ? "flex flex-row flex-wrap gap-3"
-        : "flex flex-col gap-3"
+      const layoutClass = groupLayoutClass(f.orientation)
       return `<FieldSet>
   <FieldLegend variant="label">
     ${label}${reqSpan}
@@ -296,25 +294,16 @@ function generateFieldJSX(field: FormField): string {
 
     case "combobox": {
       const f = field as ComboboxField
-      const constName = getOptionsConstName(f.name)
-      const placeholderRaw =
-        f.placeholder || (f.multiple ? "Select options" : "Select an option")
-      const placeholderAttr = escapeJsxAttr(placeholderRaw)
-      const placeholderText = escapeJsxText(placeholderRaw)
-      const searchPlaceholderAttr = escapeJsxAttr(f.searchPlaceholder || "Search...")
-      const emptyTextText = escapeJsxText(f.emptyText || "No results found.")
-
-      // When grouped, base-ui needs grouped value-strings (`{ label, items }`
-      // where items are the option values) so the committed value stays a
-      // string; labels are resolved against the flattened option list.
-      // Ungrouped behaves exactly as before.
-      const grouped = isGrouped(f)
-      const flatExpr = grouped
-        ? `${constName}.flatMap((g) => g.items)`
-        : constName
-      const itemsExpr = grouped
-        ? `${constName}.map((g) => ({ label: g.label, items: g.items.map((o) => o.value) }))`
-        : `${constName}.map((o) => o.value)`
+      const {
+        constName,
+        placeholderAttr,
+        placeholderText,
+        searchPlaceholderAttr,
+        emptyTextText,
+        grouped,
+        flatExpr,
+        itemsExpr,
+      } = comboboxCodegenParts(f)
 
       const rootProps = f.multiple
         ? `multiple
