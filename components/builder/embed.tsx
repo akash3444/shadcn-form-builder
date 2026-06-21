@@ -1,16 +1,14 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
 import { BlocksIcon, EyeIcon } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useHydrated } from "@/hooks/use-hydrated"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { BuilderProvider } from "./builder-context"
 import { FieldEditor } from "./editor/editor"
 import { FieldPalette } from "./palette/palette"
 import { FormPreview } from "./preview/preview"
-
-const subscribeNoop = () => () => {}
 
 /**
  * Compact, responsive build of the form builder meant to be iframed into the
@@ -23,11 +21,7 @@ const subscribeNoop = () => () => {}
  */
 export function BuilderEmbed() {
   // `false` on the server and during hydration, `true` once on the client.
-  const ready = useSyncExternalStore(
-    subscribeNoop,
-    () => true,
-    () => false
-  )
+  const ready = useHydrated()
   const isDesktop = useMediaQuery("(min-width: 768px)")
 
   if (!ready) {

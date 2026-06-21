@@ -5,10 +5,19 @@ import { useState } from "react"
 import { FieldPalette } from "@/components/builder/palette/palette"
 import { FieldEditor } from "@/components/builder/editor/editor"
 import { FormPreview } from "@/components/builder/preview/preview"
+import {
+  EditorSkeleton,
+  PreviewSkeleton,
+} from "@/components/builder/panel-skeletons"
+import { useHydrated } from "@/hooks/use-hydrated"
 import { cn } from "@/lib/utils"
 
 export function BuilderWorkspace() {
   const [paletteCollapsed, setPaletteCollapsed] = useState(false)
+  // The palette only reads store actions, so it renders identically on the
+  // server and client. The editor and preview render persisted form state, so
+  // they wait for client hydration to avoid a flash of the default form.
+  const hydrated = useHydrated()
 
   return (
     // The palette shrinks by exactly the amount the editor grows (164px), so the
@@ -26,8 +35,8 @@ export function BuilderWorkspace() {
         collapsed={paletteCollapsed}
         onToggleCollapse={() => setPaletteCollapsed((prev) => !prev)}
       />
-      <FieldEditor />
-      <FormPreview />
+      {hydrated ? <FieldEditor /> : <EditorSkeleton />}
+      {hydrated ? <FormPreview /> : <PreviewSkeleton />}
     </main>
   )
 }

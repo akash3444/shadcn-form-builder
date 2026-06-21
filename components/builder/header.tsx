@@ -5,9 +5,11 @@ import posthog from "posthog-js"
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react"
 import { repoUrl } from "@/lib/site"
 import { useFormBuilderStore } from "@/lib/form-builder/store"
+import { useHydrated } from "@/hooks/use-hydrated"
 import { GitHub } from "@/components/icons"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +30,10 @@ import {
 export function BuilderHeader() {
   const clearForm = useFormBuilderStore((s) => s.clearForm)
   const hasFields = useFormBuilderStore((s) => s.fields.length > 0)
+  // `fields` comes from the persisted store, so trust it only after hydration —
+  // until then we can't know whether the Clear button belongs, so we hold a
+  // button-sized skeleton in its place instead of flashing the default form's.
+  const hydrated = useHydrated()
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
@@ -80,7 +86,9 @@ export function BuilderHeader() {
           </TooltipContent>
         </Tooltip>
 
-        {hasFields && (
+        {!hydrated ? (
+          <Skeleton className="h-8 w-28.25 rounded-lg" />
+        ) : hasFields ? (
           <AlertDialog>
             <Tooltip>
               <TooltipTrigger
@@ -119,7 +127,7 @@ export function BuilderHeader() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )}
+        ) : null}
       </div>
     </header>
   )
