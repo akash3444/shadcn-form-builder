@@ -15,7 +15,9 @@
     "pretypecheck": "pnpm gen:companions",
     "typecheck": "tsc --noEmit",
     "pretypecheck:codegen": "pnpm gen:companions",
-    "typecheck:codegen": "tsx scripts/typecheck-codegen.ts"
+    "typecheck:codegen": "tsx scripts/typecheck-codegen.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -64,6 +66,7 @@
     "ts-morph": "^28.0.0",
     "tsx": "^4.22.4",
     "typescript": "^5",
-    "valibot": "^1.4.1"
+    "valibot": "^1.4.1",
+    "vitest": "^4.1.8"
   }
 }

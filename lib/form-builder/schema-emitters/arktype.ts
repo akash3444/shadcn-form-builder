@@ -116,11 +116,22 @@ function nonDateEmit(name: string, spec: SchemaSpec): FieldEmit {
     }
 
     case "string": {
+      const hasEmail = spec.ops.some((o) => o.op === "email")
+      const hasUrl = spec.ops.some((o) => o.op === "url")
+      const subtype = hasEmail ? "string.email" : hasUrl ? "string.url" : "string"
+      const maxs = spec.ops.filter((o) => o.op === "max").map((o) => o.value)
+      const maxV = maxs.length ? Math.max(...maxs) : undefined
+
+      // Optional-string min is conditional ("empty OR ≥ n"), so it can't be a DSL
+      // bound — it becomes a narrow. The subtype and the max bound still apply and
+      // must NOT be dropped (an early return here previously lost both, so an
+      // optional min+max string accepted over-long values and optional email+len
+      // lost its `string.email` check).
       const refineOpt = spec.ops.find((o) => o.op === "refineOptionalMin")
       if (refineOpt)
         return {
           key: name,
-          value: narrowValue("string", [
+          value: narrowValue(boundedDsl(subtype, undefined, maxV), [
             {
               when: `value.length !== 0 && value.length < ${refineOpt.value}`,
               message: refineOpt.message,
@@ -129,13 +140,8 @@ function nonDateEmit(name: string, spec: SchemaSpec): FieldEmit {
           objNarrows: [],
         }
 
-      const hasEmail = spec.ops.some((o) => o.op === "email")
-      const hasUrl = spec.ops.some((o) => o.op === "url")
-      const subtype = hasEmail ? "string.email" : hasUrl ? "string.url" : "string"
       const mins = spec.ops.filter((o) => o.op === "min").map((o) => o.value)
-      const maxs = spec.ops.filter((o) => o.op === "max").map((o) => o.value)
       let minV = mins.length ? Math.max(...mins) : undefined
-      const maxV = maxs.length ? Math.max(...maxs) : undefined
       // `string.email`/`string.url` already reject the empty string, so a
       // redundant `>= 1` adds noise — drop it for those subtypes.
       if ((hasEmail || hasUrl) && minV === 1) minV = undefined
@@ -170,7 +176,11 @@ function nonDateEmit(name: string, spec: SchemaSpec): FieldEmit {
       const optional = spec.tail === "optional"
       return {
         key: optional ? JSON.stringify(`${name}?`) : name,
-        value: JSON.stringify(dsl),
+        // An optional key only makes the key OMISSIBLE; a present `undefined`
+        // (which the cleared number control holds) is still type-checked and a
+        // bare `number` rejects it. Zod/Valibot's `.optional()` accept it, so
+        // union with `undefined` to keep all three in step.
+        value: JSON.stringify(optional ? `${dsl} | undefined` : dsl),
         objNarrows: [],
       }
     }
@@ -200,7 +210,14 @@ function dateEmit(name: string, field: DateField): FieldEmit {
         message: c.message,
         path: name,
       })
-    return { key, value: '{ "from?": "Date", "to?": "Date" }', objNarrows }
+    // `| undefined` so a present-but-empty optional range (the control's cleared
+    // state) is accepted, matching Zod/Valibot; when required, the object narrow
+    // still rejects `undefined` with our message.
+    return {
+      key,
+      value: '[{ "from?": "Date", "to?": "Date" }, "|", "undefined"]',
+      objNarrows,
+    }
   }
 
   const objNarrows: ObjClause[] = []
@@ -216,7 +233,9 @@ function dateEmit(name: string, field: DateField): FieldEmit {
       message: c.message,
       path: name,
     })
-  return { key, value: '"Date"', objNarrows }
+  // See the range branch: an optional key still type-checks a present
+  // `undefined`, so union it in. The presence narrow (when required) rejects it.
+  return { key, value: '"Date | undefined"', objNarrows }
 }
 
 export const arktypeEmitter: SchemaEmitter = {
