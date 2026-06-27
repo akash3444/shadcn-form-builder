@@ -1,8 +1,9 @@
 import {
+  ArkType,
   ReactHookForm,
   ShadcnUi,
   TanStack,
-  TypeScript,
+  Valibot,
   Zod,
 } from "@/components/icons"
 
@@ -13,8 +14,9 @@ const TARGETS = [
   },
   { name: "TanStack Form", Icon: TanStack },
   { name: "Zod", Icon: Zod },
+  { name: "Valibot", Icon: Valibot },
+  { name: "ArkType", Icon: ArkType },
   { name: "shadcn/ui", Icon: ShadcnUi },
-  { name: "TypeScript", Icon: TypeScript },
 ]
 
 export function GenerationTargets() {
@@ -26,12 +28,12 @@ export function GenerationTargets() {
         </p>
         <ul
           role="list"
-          className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-0 sm:gap-y-0"
+          className="mt-8 flex flex-wrap items-center justify-center gap-y-6 gap-x-10"
         >
           {TARGETS.map((target) => (
             <li
               key={target.name}
-              className="inline-flex items-center gap-2.5 text-sm font-medium text-foreground/70 sm:border-l sm:border-border/60 sm:px-6 sm:first:border-l-0"
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-foreground/70"
             >
               <target.Icon className="size-6" />
               {target.name}

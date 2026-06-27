@@ -1,6 +1,8 @@
 import {
   AlignLeftIcon,
+  CalendarIcon,
   CircleDotIcon,
+  KeyRoundIcon,
   ListChecksIcon,
   ListIcon,
   SearchIcon,
@@ -14,7 +16,12 @@ const FIELD_TYPES = [
   {
     icon: TextCursorInputIcon,
     name: "Input",
-    description: "Text, email, password, number and more.",
+    description: "Text, email, URL, tel and number.",
+  },
+  {
+    icon: KeyRoundIcon,
+    name: "Password",
+    description: "Masked input with a show/hide toggle.",
   },
   {
     icon: AlignLeftIcon,
@@ -56,6 +63,11 @@ const FIELD_TYPES = [
     name: "Combobox",
     description: "Searchable select, single or multi.",
   },
+  {
+    icon: CalendarIcon,
+    name: "Date",
+    description: "Single date or range, with bounds.",
+  },
 ]
 
 export function FieldTypes() {
@@ -68,7 +80,7 @@ export function FieldTypes() {
               Field library
             </p>
             <h2 className="mt-2 max-w-[24ch] text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Nine field types, each ready to ship.
+              Every field type you need, ready to ship.
             </h2>
           </div>
           <p className="max-w-[52ch] text-base text-pretty text-muted-foreground lg:text-right">
@@ -84,12 +96,12 @@ export function FieldTypes() {
           {FIELD_TYPES.map((field) => (
             <li
               key={field.name}
-              className="flex items-start gap-3 rounded-xl border bg-card p-4 dark:inset-ring dark:inset-ring-white/5"
+              className="flex items-stretch overflow-hidden rounded-xl border bg-card"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <span className="flex shrink-0 items-center justify-center self-stretch border-e border-dashed border-border px-5 text-foreground">
                 <field.icon className="size-4.5" />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 px-4 py-2.5">
                 <p className="text-sm font-semibold">{field.name}</p>
                 <p className="mt-0.5 text-sm text-pretty text-muted-foreground">
                   {field.description}

@@ -7,7 +7,7 @@ const STEPS = [
   {
     title: "Configure and validate",
     description:
-      "Set labels, placeholders, defaults and validation rules. The Zod schema updates as you go.",
+      "Set labels, placeholders, defaults and validation rules. The validation schema updates as you go.",
   },
   {
     title: "Copy the generated code",
@@ -36,7 +36,7 @@ export function HowItWorks() {
           {STEPS.map((step, index) => (
             <li
               key={step.title}
-              className="rounded-xl border bg-card p-6 dark:inset-ring dark:inset-ring-white/5"
+              className="rounded-xl border bg-card p-6"
             >
               <div className="flex size-8 items-center justify-center rounded-lg border border-dashed bg-muted/70 text-sm font-semibold text-foreground tabular-nums">
                 {index + 1}

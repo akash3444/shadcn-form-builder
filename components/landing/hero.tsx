@@ -35,7 +35,7 @@ export function Hero() {
           <p className="mx-auto mt-6 max-w-[60ch] text-base text-pretty text-muted-foreground sm:text-lg">
             Stop hand-wiring schemas, components, and validation. Drag fields,
             set the rules, and copy fully typed React Hook Form or TanStack Form
-            code with Zod.
+            code with Zod, Valibot, or ArkType.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
             <CtaButton location="hero" />

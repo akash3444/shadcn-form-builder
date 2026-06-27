@@ -16,15 +16,15 @@ const FEATURES = [
   },
   {
     icon: LayersIcon,
-    title: "Nine field types",
+    title: "A field for every input",
     description:
-      "Inputs, textareas, selects, checkboxes, switches, radios, sliders, and comboboxes — each fully configurable.",
+      "Inputs, passwords, textareas, selects, checkboxes, switches, radios, sliders, comboboxes, and date pickers — each fully configurable.",
   },
   {
     icon: ShieldCheckIcon,
-    title: "Zod validation built in",
+    title: "Validation, your way",
     description:
-      "Toggle requirements, lengths and ranges in the UI and get a matching Zod schema generated for you.",
+      "Toggle requirements, lengths and ranges in the UI and get a matching Zod, Valibot or ArkType schema generated for you.",
   },
   {
     icon: GitBranchIcon,
@@ -69,7 +69,7 @@ export function Features() {
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-xl border bg-card p-6 dark:inset-ring dark:inset-ring-white/5"
+              className="rounded-xl border bg-card p-6"
             >
               <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-foreground">
                 <feature.icon className="size-4.5" />
